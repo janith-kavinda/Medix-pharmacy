@@ -1,6 +1,12 @@
 import mongoose from "mongoose";
 
 const BillingSchema = new mongoose.Schema({
+  orderId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Order",
+    default: null,
+  },
+
   customerName: {
     type: String,
     default: "Walk-in"
@@ -24,6 +30,12 @@ const BillingSchema = new mongoose.Schema({
   total: {
     type: Number,
     required: true
+  },
+
+  paymentStatus: {
+    type: String,
+    enum: ["Pending", "Paid"],
+    default: "Pending"
   }
 
 }, { timestamps: true });

@@ -2,6 +2,7 @@ import express from 'express';
 import {
     createMedicine,
     getAllMedicines,
+    downloadInventoryReport,
     getMedicineById,
     updateMedicine,
     deleteMedicine
@@ -11,6 +12,7 @@ const router = express.Router();
 
 router.post('/', createMedicine);
 router.get('/', getAllMedicines);
+router.get('/report', downloadInventoryReport);
 router.get('/:id', getMedicineById);
 router.put('/:id', updateMedicine);
 router.delete('/:id', deleteMedicine);
