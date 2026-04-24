@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import html2canvas from "html2canvas";
 import { billingsApi, ordersApi } from "../api/client";
+import AdminPageShell from "../components/AdminPageShell";
 
 function formatRs(amount) {
   const value = Number(amount) || 0;
@@ -573,98 +574,8 @@ export default function BillingPage() {
   };
 
   return (
-    <div className="page billing-page">
-      <style>{`
-        .order-summary-card {
-          background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
-          border: 2px solid #e5e7eb;
-          border-radius: 12px;
-          padding: 2rem;
-          margin: 1.5rem 0;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-          max-width: 600px;
-        }
-
-        .order-summary-title {
-          font-size: 1.4rem;
-          font-weight: 700;
-          color: #1a1a1a;
-          margin: 0 0 1.5rem 0;
-          padding-bottom: 1rem;
-          border-bottom: 3px solid #0d9488;
-        }
-
-        .order-summary-content {
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
-        }
-
-        .summary-row {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 1rem 0;
-          border-bottom: 1px solid #e5e7eb;
-          font-size: 1rem;
-        }
-
-        .summary-row:last-child {
-          border-bottom: none;
-        }
-
-        .summary-label {
-          font-weight: 600;
-          color: #666;
-          font-size: 0.95rem;
-        }
-
-        .summary-value {
-          font-weight: 700;
-          color: #1a1a1a;
-          font-size: 1.1rem;
-        }
-
-        .summary-row.summary-total {
-          padding-top: 1.5rem;
-          border-top: 2px solid #0d9488;
-          margin-top: 0.5rem;
-        }
-
-        .summary-row.summary-total .summary-label {
-          font-size: 1.1rem;
-          color: #1a1a1a;
-          font-weight: 700;
-        }
-
-        .summary-total-value {
-          font-size: 1.5rem;
-          font-weight: 700;
-          background: linear-gradient(135deg, #0d9488 0%, #00d9a3 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-
-        @media (max-width: 768px) {
-          .order-summary-card {
-            padding: 1.5rem;
-            max-width: 100%;
-          }
-
-          .order-summary-title {
-            font-size: 1.2rem;
-          }
-
-          .summary-row {
-            padding: 0.75rem 0;
-          }
-
-          .summary-total-value {
-            font-size: 1.3rem;
-          }
-        }
-      `}</style>
+    <AdminPageShell breadcrumb="Billing">
+      <div className="billing-page ph-admin-billing">
       <div className="page-header">
         <div>
           <h1>Billing</h1>
@@ -717,10 +628,10 @@ export default function BillingPage() {
                         onClick={() => handleOrderSelect(order)}
                         style={{
                           padding: "1rem",
-                          border: isSelected ? "2px solid #0d9488" : "1px solid #d1d5db",
+                          border: isSelected ? "2px solid #0284c7" : "1px solid #d1d5db",
                           borderRadius: "8px",
                           cursor: "pointer",
-                          backgroundColor: isSelected ? "#f0fdfa" : "#fff",
+                          backgroundColor: isSelected ? "#e0f2fe" : "#fff",
                           marginBottom: "0.75rem",
                           transition: "all 0.2s",
                         }}
@@ -779,9 +690,9 @@ export default function BillingPage() {
               <div className="selected-order-info" style={{ 
                 marginBottom: "1.5rem", 
                 padding: "1rem", 
-                backgroundColor: "#f0fdfa", 
+                backgroundColor: "#e0f2fe",
                 borderRadius: "8px",
-                border: "1px solid #0d9488"
+                border: "1px solid #0284c7"
               }}>
                 <h4 style={{ marginTop: 0, marginBottom: "0.75rem" }}>Selected Order Details</h4>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", fontSize: "0.95rem" }}>
@@ -983,5 +894,6 @@ export default function BillingPage() {
         )}
       </div>
     </div>
+    </AdminPageShell>
   );
 }

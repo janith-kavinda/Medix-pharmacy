@@ -1,6 +1,17 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, Navigate } from "react-router-dom";
 import { usersApi } from "../api/client";
+import MedixButton from "../components/ui/MedixButton";
+
+function isStoredAdmin() {
+  try {
+    const raw = localStorage.getItem("medix_user");
+    const u = raw ? JSON.parse(raw) : null;
+    return Boolean(u && String(u.role).toLowerCase() === "admin");
+  } catch {
+    return false;
+  }
+}
 
 export default function AdminLoginPage() {
   const navigate = useNavigate();
@@ -30,7 +41,7 @@ export default function AdminLoginPage() {
         localStorage.setItem("medix_user", JSON.stringify(response.user));
       }
 
-      navigate("/app");
+      navigate("/admin", { replace: true });
     } catch (err) {
       setError(err.message || "Admin login failed.");
     } finally {
@@ -38,24 +49,29 @@ export default function AdminLoginPage() {
     }
   };
 
+  if (isStoredAdmin()) {
+    return <Navigate to="/admin" replace />;
+  }
+
   return (
     <div className="auth-shell">
       <div className="auth-card auth-card-admin">
         <div className="auth-head">
-          <p className="auth-kicker">Restricted Access</p>
-          <h1>Admin Login</h1>
-          <p>Only admin users can access the pharmacy admin panel.</p>
+          <p className="auth-kicker">Pharmacy staff</p>
+          <h1>Admin sign in</h1>
+          <p>Sign in to the pharmacy dashboard (inventory, orders, billing).</p>
         </div>
 
         {error && <div className="alert alert-error">{error}</div>}
 
-        <form onSubmit={handleSubmit} className="auth-form">
+        <form onSubmit={handleSubmit} className="auth-form" noValidate>
           <div className="form-row">
-            <label htmlFor="email">Admin Email</label>
+            <label htmlFor="admin-login-email">Admin email</label>
             <input
-              id="email"
+              id="admin-login-email"
               name="email"
               type="email"
+              autoComplete="username"
               placeholder="admin@medix.com"
               value={form.email}
               onChange={handleChange}
@@ -64,25 +80,26 @@ export default function AdminLoginPage() {
           </div>
 
           <div className="form-row">
-            <label htmlFor="password">Password</label>
+            <label htmlFor="admin-login-password">Password</label>
             <input
-              id="password"
+              id="admin-login-password"
               name="password"
               type="password"
-              placeholder="Enter admin password"
+              autoComplete="current-password"
+              placeholder="Enter your password"
               value={form.password}
               onChange={handleChange}
               required
             />
           </div>
 
-          <button type="submit" className="btn btn-primary btn-block" disabled={submitting}>
-            {submitting ? "Signing In..." : "Admin Login"}
-          </button>
+          <MedixButton type="submit" variant="primary" block disabled={submitting}>
+            {submitting ? "Signing in…" : "Sign in to dashboard"}
+          </MedixButton>
         </form>
 
         <p className="auth-bottom-text">
-          Need an admin account? <Link to="/admin/signup">Create one here</Link>.
+          <Link to="/login">User sign in</Link>
         </p>
       </div>
     </div>
