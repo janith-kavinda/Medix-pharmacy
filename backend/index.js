@@ -1,10 +1,10 @@
 import express from "express";
-import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
 
+import { connectDB } from "./config/db.js";
 import inventoryRouter from "./routes/Inventryrouters.js";
 import orderRouter from "./routes/Oderrouters.js";
 import billingRouter from "./routes/Billingroute.js";
@@ -33,23 +33,7 @@ app.use("/api/orders", orderRouter);
 app.use("/api/billings", billingRouter);
 app.use("/api/users", userRouter);
 
-// MongoDB Connection
-const mongoUri =
-  process.env.MONGO_URI ||
-  process.env.MONGODB_URI ||
-  process.env.MongoDB_URI ||
-  process.env.MongoDBUri;
-if (!mongoUri) {
-  console.error(
-    "Missing MongoDB connection string in environment. Set one of: MONGO_URI, MONGODB_URI, MongoDB_URI. (Loaded via backend/.env)"
-  );
-  process.exit(1);
-}
-
-mongoose
-  .connect(mongoUri)
-  .then(() => console.log("✅ MongoDB Connected!"))
-  .catch((err) => console.error("❌ DB Connection Error:", err));
+connectDB();
 
 // Start Server
 const PORT = process.env.PORT || 5000;
