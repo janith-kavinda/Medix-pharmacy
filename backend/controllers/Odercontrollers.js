@@ -10,13 +10,34 @@ export const createOrder = async (req, res) => {
   }
 };
 
-// READ ALL
+// READ ALL (optional ?userId=… for the customer profile “my orders”)
 export const getAllOrders = async (req, res) => {
   try {
+    const { userId } = req.query;
+    if (userId != null && String(userId).trim() !== "") {
+      const key = String(userId).trim();
+      const orders = await Order.find({ userId: key }).sort({ createdAt: -1 });
+      return res.json(orders);
+    }
     const orders = await Order.find();
-    res.json(orders);
+    return res.json(orders);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
+  }
+};
+
+// ORDERS FOR A USER (define before :id route)
+export const getOrdersByUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    if (!userId) {
+      return res.status(400).json({ error: "userId is required" });
+    }
+    const key = String(userId).trim();
+    const orders = await Order.find({ userId: key }).sort({ createdAt: -1 });
+    return res.json(orders);
+  } catch (err) {
+    return res.status(500).json({ error: err.message || "Failed to load orders" });
   }
 };
 
