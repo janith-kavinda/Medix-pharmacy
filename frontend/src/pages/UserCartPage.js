@@ -1,5 +1,19 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import MedixPublicHero from "../components/MedixPublicHero";
+import MedixButton from "../components/ui/MedixButton";
+import cartHeroImage from "../images/female-pharmacist-with-table-checking-stock-pharmacy.jpg";
+
+function readLoggedIn() {
+  try {
+    const raw = localStorage.getItem("medix_user");
+    if (!raw) return false;
+    const u = JSON.parse(raw);
+    return Boolean(u?._id || u?.email);
+  } catch {
+    return false;
+  }
+}
 
 function getCartId(item) {
   return String(item?._id || item?.id || item?.name || "");
@@ -46,21 +60,39 @@ function saveCart(items) {
 
 export default function UserCartPage() {
   const navigate = useNavigate();
-  const [items, setItems] = useState(getStoredCart());
+  const [isLoggedIn, setIsLoggedIn] = useState(() => readLoggedIn());
+  const [items, setItems] = useState(() => (readLoggedIn() ? getStoredCart() : []));
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  const syncAuth = useCallback(() => {
+    const next = readLoggedIn();
+    setIsLoggedIn(next);
+    if (next) {
+      setItems(getStoredCart());
+    } else {
+      setItems([]);
+    }
+  }, []);
+
   useEffect(() => {
-    const syncCart = () => setItems(getStoredCart());
-    syncCart();
+    const syncCart = () => {
+      if (!readLoggedIn()) return;
+      setItems(getStoredCart());
+    };
+    syncAuth();
+    window.addEventListener("storage", syncAuth);
+    window.addEventListener("focus", syncAuth);
     window.addEventListener("storage", syncCart);
     window.addEventListener("focus", syncCart);
     return () => {
+      window.removeEventListener("storage", syncAuth);
+      window.removeEventListener("focus", syncAuth);
       window.removeEventListener("storage", syncCart);
       window.removeEventListener("focus", syncCart);
     };
-  }, []);
+  }, [syncAuth]);
 
   const subtotal = useMemo(() => {
     return items.reduce(
@@ -70,6 +102,7 @@ export default function UserCartPage() {
   }, [items]);
 
   const updateQty = (id, qty) => {
+    if (!readLoggedIn()) return;
     const safeQty = Math.max(1, Number(qty) || 1);
     const next = items.map((item) =>
       getCartId(item) === id
@@ -84,17 +117,23 @@ export default function UserCartPage() {
   };
 
   const removeItem = (id) => {
+    if (!readLoggedIn()) return;
     const next = items.filter((item) => getCartId(item) !== id);
     setItems(next);
     saveCart(next);
   };
 
   const clearCart = () => {
+    if (!readLoggedIn()) return;
     setItems([]);
     saveCart([]);
   };
 
   const handlePay = () => {
+    if (!readLoggedIn()) {
+      navigate("/login", { state: { from: "/cart" } });
+      return;
+    }
     if (items.length === 0) return;
 
     try {
@@ -195,7 +234,7 @@ export default function UserCartPage() {
     .cart-item-price {
       font-size: 1.2rem;
       font-weight: 700;
-      color: #00d9a3;
+      color: #00529b;
       margin-top: 0.5rem;
     }
 
@@ -215,20 +254,28 @@ export default function UserCartPage() {
       padding: 0.5rem;
     }
 
-    .qty-btn {
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 0.4rem 0.6rem;
-      font-weight: 700;
-      color: #0f3b5f;
-      font-size: 1rem;
-      transition: all 0.2s;
-      border-radius: 4px;
+    .qty-adjuster .medix-btn.cart-qty-btn {
+      min-width: 2.25rem;
+      min-height: 2.25rem;
+      padding: 0.2rem 0.45rem;
+      font-weight: 800;
+      font-size: 1.1rem;
+      line-height: 1;
+      border: 1px solid rgba(0, 82, 155, 0.25);
+      color: #00529b;
+      background: #ffffff;
+      box-shadow: none;
+      text-transform: none;
+      letter-spacing: 0;
     }
 
-    .qty-btn:hover {
-      background: #e0e0e0;
+    .qty-adjuster .medix-btn.cart-qty-btn:hover:not(:disabled) {
+      background: #e8f1fd;
+      border-color: rgba(0, 82, 155, 0.45);
+    }
+
+    .qty-adjuster .medix-btn.cart-qty-btn:disabled {
+      opacity: 0.45;
     }
 
     .qty-input {
@@ -245,21 +292,14 @@ export default function UserCartPage() {
       outline: none;
     }
 
-    .btn-remove-cart {
-      background: #fee2e2;
-      color: #991b1b;
-      border: none;
-      padding: 0.6rem 1rem;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 0.9rem;
-      transition: all 0.2s;
-    }
-
-    .btn-remove-cart:hover {
-      background: #fecaca;
-      transform: scale(1.05);
+    .medix-btn.cart-remove-btn {
+      padding: 0.5rem 0.95rem;
+      font-size: 0.85rem;
+      font-weight: 700;
+      min-height: 0;
+      box-shadow: none;
+      text-transform: none;
+      letter-spacing: 0.02em;
     }
 
     .order-summary {
@@ -292,11 +332,11 @@ export default function UserCartPage() {
 
     .summary-row.total {
       padding-top: 1rem;
-      border-top: 2px solid #eee;
+      border-top: 2px solid #e2ecf8;
       margin-top: 1rem;
       font-size: 1.2rem;
       font-weight: 700;
-      color: #00d9a3;
+      color: #003d75;
     }
 
     .summary-row.total span:last-child {
@@ -315,41 +355,12 @@ export default function UserCartPage() {
       margin-top: 1.5rem;
     }
 
-    .btn-checkout {
+    .checkout-buttons .medix-btn.btn-checkout,
+    .checkout-buttons .medix-btn {
       width: 100%;
-      padding: 1rem;
-      border: none;
-      border-radius: 8px;
+      text-transform: none;
+      letter-spacing: 0.01em;
       font-weight: 700;
-      font-size: 0.95rem;
-      cursor: pointer;
-      transition: all 0.3s;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .btn-checkout.primary {
-      background: linear-gradient(135deg, #0d9488 0%, #0f3b5f 100%);
-      color: white;
-    }
-
-    .btn-checkout.primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(13, 148, 136, 0.3);
-    }
-
-    .btn-checkout.secondary {
-      background: #f5f5f5;
-      color: #666;
-    }
-
-    .btn-checkout.secondary:hover {
-      background: #e8e8e8;
-    }
-
-    .btn-checkout:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
     }
 
     .empty-cart {
@@ -378,20 +389,44 @@ export default function UserCartPage() {
       font-size: 0.95rem;
     }
 
-    .btn-continue-shopping {
-      display: inline-block;
-      background: linear-gradient(135deg, #0d9488 0%, #0f3b5f 100%);
-      color: white;
-      padding: 0.8rem 1.5rem;
-      border-radius: 8px;
-      text-decoration: none;
-      font-weight: 600;
-      transition: all 0.3s;
+    .empty-cart .medix-btn.btn-continue-shopping {
+      margin-top: 0.25rem;
     }
 
-    .btn-continue-shopping:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(13, 148, 136, 0.3);
+    .cart-login-prompt {
+      text-align: center;
+      padding: 3rem 1.5rem;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      max-width: 480px;
+      margin: 2rem auto 0;
+    }
+
+    .cart-login-prompt-icon {
+      font-size: 3rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .cart-login-prompt h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin: 0 0 0.5rem;
+    }
+
+    .cart-login-prompt p {
+      color: #666;
+      margin: 0 0 1.25rem;
+      line-height: 1.55;
+      font-size: 0.95rem;
+    }
+
+    .cart-login-prompt-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      justify-content: center;
     }
 
     .inventory-head {
@@ -464,30 +499,48 @@ export default function UserCartPage() {
 
   return (
     <div className="cart-page-wrapper">
-      <section className="public-hero-card cart-shell">
-        <div className="inventory-head">
-          <div>
-            <p className="public-kicker">Shopping Cart</p>
-            <h1 className="public-title inventory-title">Your Medicine Cart</h1>
-            <p className="public-subtitle">Review your selected medicines before checkout.</p>
-          </div>
-        </div>
+      <div className="public-main">
+        <MedixPublicHero
+          kicker="Shopping Cart"
+          title="Your Medicine Cart"
+          subtitle="Review your selected medicines before checkout."
+          image={cartHeroImage}
+          imageAlt="Pharmacist reviewing medicine stock at the counter"
+          className="cart-shell"
+        />
 
         {error && <div className="alert alert-error">{error}</div>}
         {success && <div className="alert alert-success">{success}</div>}
 
-        {items.length === 0 ? (
+        {!isLoggedIn ? (
+          <div className="medix-guest-prompt cart-login-prompt" role="status">
+            <p className="medix-guest-emoji" aria-hidden="true">
+              🔐
+            </p>
+            <h2>Sign in to view your cart</h2>
+            <p>
+              You are not signed in. Please sign in to view and manage your cart, then continue to checkout.
+            </p>
+            <div className="medix-guest-prompt__actions cart-login-prompt-actions">
+              <MedixButton to="/login" state={{ from: "/cart" }} variant="primary">
+                Sign in
+              </MedixButton>
+              <MedixButton to="/signup" variant="ghost">
+                Create account
+              </MedixButton>
+              <MedixButton type="button" variant="muted" onClick={() => navigate("/medicines")}>
+                Browse medicines
+              </MedixButton>
+            </div>
+          </div>
+        ) : items.length === 0 ? (
           <div className="empty-cart">
             <div className="empty-cart-icon">🛒</div>
             <h2 className="empty-cart-title">Your Cart is Empty</h2>
             <p className="empty-cart-text">Start adding medicines to your cart from our catalog.</p>
-            <button 
-              type="button" 
-              className="btn-continue-shopping"
-              onClick={() => navigate("/medicines")}
-            >
+            <MedixButton type="button" variant="primary" onClick={() => navigate("/medicines")} className="btn-continue-shopping">
               Continue Shopping
-            </button>
+            </MedixButton>
           </div>
         ) : (
           <div className="cart-container">
@@ -516,13 +569,16 @@ export default function UserCartPage() {
                     </div>
                     <div className="cart-item-controls">
                       <div className="qty-adjuster">
-                        <button
-                          className="qty-btn"
+                        <MedixButton
+                          type="button"
+                          variant="ghost"
+                          className="cart-qty-btn"
                           onClick={() => updateQty(itemId, qty - 1)}
                           disabled={qty <= 1}
+                          aria-label="Decrease quantity"
                         >
                           −
-                        </button>
+                        </MedixButton>
                         <input
                           className="qty-input"
                           type="number"
@@ -530,20 +586,24 @@ export default function UserCartPage() {
                           value={qty}
                           onChange={(e) => updateQty(itemId, e.target.value)}
                         />
-                        <button
-                          className="qty-btn"
+                        <MedixButton
+                          type="button"
+                          variant="ghost"
+                          className="cart-qty-btn"
                           onClick={() => updateQty(itemId, qty + 1)}
+                          aria-label="Increase quantity"
                         >
                           +
-                        </button>
+                        </MedixButton>
                       </div>
-                      <button 
-                        type="button" 
-                        className="btn-remove-cart"
+                      <MedixButton
+                        type="button"
+                        variant="danger"
+                        className="cart-remove-btn"
                         onClick={() => removeItem(itemId)}
                       >
                         Remove
-                      </button>
+                      </MedixButton>
                     </div>
                   </div>
                 );
@@ -574,35 +634,32 @@ export default function UserCartPage() {
               </div>
 
               <div className="checkout-buttons">
-                <button 
-                  type="button" 
-                  className="btn-checkout primary"
-                  onClick={handlePay} 
-                  disabled={paying}
-                >
+                <MedixButton type="button" variant="primary" onClick={handlePay} disabled={paying} className="btn-checkout">
                   {paying ? "Processing..." : "Proceed to Payment"}
-                </button>
-                <button 
-                  type="button" 
-                  className="btn-checkout secondary"
+                </MedixButton>
+                <MedixButton
+                  type="button"
+                  variant="ghost"
                   onClick={() => navigate("/medicines")}
                   disabled={paying}
+                  className="btn-checkout"
                 >
                   Continue Shopping
-                </button>
-                <button 
-                  type="button" 
-                  className="btn-checkout secondary"
+                </MedixButton>
+                <MedixButton
+                  type="button"
+                  variant="danger"
                   onClick={clearCart}
                   disabled={paying}
+                  className="btn-checkout"
                 >
                   Clear Cart
-                </button>
+                </MedixButton>
               </div>
             </div>
           </div>
         )}
-      </section>
+      </div>
       <style>{cartPageStyles}</style>
     </div>
   );

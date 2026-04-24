@@ -1,33 +1,18 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { jsPDF } from "jspdf";
 import { billingsApi, ordersApi } from "../api/client";
+import MedixPublicHero from "../components/MedixPublicHero";
+import MedixButton from "../components/ui/MedixButton";
+import UserOrderBillingCard from "../components/UserOrderBillingCard";
+import billingHeroImage from "../images/young-hispanic-man-pharmacist-smiling-confident-scanning-pills-bottle-pharmacy.jpg";
+import "./UserBillingPage.css";
 
 function formatRs(value) {
   return `Rs ${(Number(value) || 0).toFixed(2)}`;
 }
 
-function escapeHtml(value) {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/\"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
-function normalizeOrderStatus(value) {
-  const status = String(value || "").toLowerCase();
-  if (status === "completed") return "Approved";
-  if (status === "approved") return "Approved";
-  if (status === "cancelled") return "Rejected";
-  if (status === "rejected") return "Rejected";
-  return "Pending";
-}
-
-function resolveBillFromOrder(bill, orders) {
-  const linkedOrder = orders.find((o) => String(o?._id) === String(bill?.orderId || ""));
+function resolveBillFromOrder(bill, orderList) {
+  const linkedOrder = orderList.find((o) => String(o?._id) === String(bill?.orderId || ""));
   if (!linkedOrder) {
     return {
       medicineName: bill?.medicineName || "-",
@@ -58,15 +43,63 @@ function getCurrentUser() {
   }
 }
 
+function isBillPaid(bill) {
+  return String(bill?.paymentStatus || "").toLowerCase() === "paid";
+}
+
+function formatDateTime(value) {
+  if (!value) return "—";
+  try {
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return "—";
+    return d.toLocaleString("en-LK", { dateStyle: "medium", timeStyle: "short" });
+  } catch {
+    return "—";
+  }
+}
+
+/** Latest billing row in the system for this order (if any). */
+function getLatestBillForOrder(orderId, allBills) {
+  if (orderId == null) return null;
+  const list = allBills.filter((b) => String(b?.orderId) === String(orderId));
+  if (list.length === 0) return null;
+  return list.sort(
+    (a, b) =>
+      new Date(b?.updatedAt || b?.createdAt || 0) - new Date(a?.updatedAt || a?.createdAt || 0)
+  )[0];
+}
+
+function orderBelongsToUser(o, currentUserId, customerName) {
+  const orderUserId = o?.userId ? String(o.userId) : "";
+  if (currentUserId && orderUserId) {
+    return orderUserId === currentUserId;
+  }
+  return !orderUserId && String(o?.customerName || "") === String(customerName || "");
+}
+
 export default function UserBillingPage() {
-  const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [downloadingId, setDownloadingId] = useState(null);
 
-  const currentUser = useMemo(() => getCurrentUser(), []);
+  const [currentUser, setCurrentUser] = useState(() => getCurrentUser());
+  const isLoggedIn = Boolean(currentUser?._id || currentUser?.email);
+
+  const syncUser = useCallback(() => {
+    setCurrentUser(getCurrentUser());
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener("focus", syncUser);
+    window.addEventListener("storage", syncUser);
+    return () => {
+      window.removeEventListener("focus", syncUser);
+      window.removeEventListener("storage", syncUser);
+    };
+  }, [syncUser]);
+
   const currentUserId = currentUser?._id ? String(currentUser._id) : "";
   const customerName = currentUser?.fullName || currentUser?.email || "";
 
@@ -78,260 +111,196 @@ export default function UserBillingPage() {
       setOrders(Array.isArray(ordersData) ? ordersData : []);
       setBills(Array.isArray(billsData) ? billsData : []);
     } catch (err) {
-      setError(err.message || "Failed to load billing data.");
+      setError(err.message || "Failed to load orders and billing.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (!currentUser?._id) {
-      navigate("/login", { replace: true });
+    if (!isLoggedIn) {
+      setLoading(false);
+      setOrders([]);
+      setBills([]);
       return;
     }
     fetchData();
-  }, [currentUser, navigate]);
+  }, [isLoggedIn]);
 
-  const ownApprovedOrders = useMemo(() => {
-    return orders.filter((o) => {
-      const orderUserId = o?.userId ? String(o.userId) : "";
-      const matchesCustomer =
-        (currentUserId && orderUserId && orderUserId === currentUserId) ||
-        (!orderUserId && String(o?.customerName || "") === customerName);
-      const approved = normalizeOrderStatus(o?.status) === "Approved";
-      return matchesCustomer && approved;
-    });
+  const myOrders = useMemo(() => {
+    return orders
+      .filter((o) => orderBelongsToUser(o, currentUserId, customerName))
+      .sort((a, b) => new Date(b?.createdAt || 0) - new Date(a?.createdAt || 0));
   }, [orders, currentUserId, customerName]);
 
-  const orderMap = useMemo(() => {
-    const map = new Map();
-    orders.forEach((o) => {
-      map.set(String(o._id), o);
-    });
-    return map;
-  }, [orders]);
+  const downloadInvoicePdf = (bill) => {
+    if (!bill?._id) return;
 
-  const ownBills = useMemo(() => {
-    return bills.filter((b) => {
-      const linkedOrder = b?.orderId ? orderMap.get(String(b.orderId)) : null;
-      if (linkedOrder) {
-        const orderUserId = linkedOrder?.userId ? String(linkedOrder.userId) : "";
-        if (currentUserId && orderUserId) {
-          return orderUserId === currentUserId;
-        }
-        return !orderUserId && String(linkedOrder?.customerName || "") === customerName;
-      }
-      return false;
-    });
-  }, [bills, currentUserId, customerName, orderMap]);
+    const paid = isBillPaid(bill);
+    const billData = resolveBillFromOrder(bill, orders);
+    const linkedOrder = bill?.orderId
+      ? orders.find((o) => String(o?._id) === String(bill.orderId))
+      : null;
+    const invoiceNo = String(bill._id).slice(-8).toUpperCase() || "N/A";
+    const orderRef = linkedOrder?._id
+      ? String(linkedOrder._id).slice(-8).toUpperCase()
+      : "—";
+    const issued = bill?.createdAt ? new Date(bill.createdAt) : new Date();
+    const dateText = issued.toLocaleDateString("en-LK", { dateStyle: "long" });
+    const orderPlacedAt = linkedOrder?.createdAt ? formatDateTime(linkedOrder.createdAt) : "—";
+    const paymentAt = paid
+      ? (bill?.updatedAt ? formatDateTime(bill.updatedAt) : formatDateTime(bill?.createdAt))
+      : "—";
+    const amountNum = Number(billData.total) || Number(bill?.total) || 0;
+    const orderStatusLabel = linkedOrder?.status ? String(linkedOrder.status) : "—";
+    const cust = bill?.customerName || customerName || "Customer";
 
-  const billedOrderIds = useMemo(() => {
-    return new Set(
-      ownBills
-        .map((b) => (b.orderId ? String(b.orderId) : ""))
-        .filter(Boolean)
-    );
-  }, [ownBills]);
+    const doc = new jsPDF({ unit: "mm", format: "a4" });
+    const w = doc.internal.pageSize.getWidth();
+    const m = 16;
+    const maxText = w - m * 2;
+    let y = 18;
+    const line = (t, weight = "normal", size = 10) => {
+      doc.setFont("helvetica", weight);
+      doc.setFontSize(size);
+      const lines = doc.splitTextToSize(t, maxText);
+      doc.text(lines, m, y);
+      y += lines.length * 5.2;
+    };
 
-  const readyToGenerate = useMemo(() => {
-    return ownApprovedOrders.filter((o) => !billedOrderIds.has(String(o._id)));
-  }, [ownApprovedOrders, billedOrderIds]);
+    doc.setDrawColor(15, 59, 95);
+    doc.setLineWidth(0.5);
+    doc.line(m, y, w - m, y);
+    y += 8;
 
-  const handleGenerateBill = async (order) => {
-    try {
-      setError("");
-      setSuccess("");
-      await billingsApi.create({
-        orderId: order._id,
-        customerName: order.customerName || customerName,
-        medicineName: order.medicineName,
-        quantity: Number(order.quantity) || 0,
-        price: Number(order.price) || 0,
-        paymentStatus: "Pending",
-      });
-      setSuccess("Your bill was generated successfully.");
-      fetchData();
-    } catch (err) {
-      setError(err.message || "Failed to generate your bill.");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.setTextColor(15, 59, 95);
+    doc.text("Medix Pharmacy", m, y);
+    y += 8;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(80, 80, 80);
+    line(paid ? "TAX INVOICE" : "INVOICE (payment not completed)", "bold", 11);
+    y += 2;
+    doc.setTextColor(0, 0, 0);
+    line(`Invoice no. ${invoiceNo}    Date: ${dateText}`);
+
+    y += 3;
+    line("Bill to: " + cust, "normal");
+    y += 4;
+    line("— Order —", "bold", 10);
+    line(`Order #${orderRef}`);
+    line(`Status: ${orderStatusLabel}   Placed: ${orderPlacedAt}`);
+
+    y += 2;
+    line("— Payment —", "bold", 10);
+    line(`Status: ${paid ? "PAID" : (bill?.paymentStatus || "Pending")}`);
+    line(`Amount: ${formatRs(amountNum)}`);
+    if (paid) {
+      line(`Payment recorded: ${paymentAt}`);
     }
+
+    y += 2;
+    line("— Line item (billing) —", "bold", 10);
+    const itemName = String(billData.medicineName || "—");
+    const itemLines = doc.splitTextToSize("Item: " + itemName, maxText);
+    doc.text(itemLines, m, y);
+    y += itemLines.length * 5.2;
+    line(
+      `Qty: ${billData.quantity}   Unit: ${formatRs(billData.price)}   Line total: ${formatRs(
+        billData.total
+      )}`,
+      "bold",
+      10
+    );
+
+    y += 4;
+    doc.setDrawColor(200, 200, 200);
+    doc.line(m, y, w - m, y);
+    y += 6;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text("Total: " + formatRs(amountNum), w - m, y, { align: "right" });
+    y += 10;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    doc.text("Medix Pharmacy — electronic invoice", w / 2, y, { align: "center" });
+
+    doc.save(`Medix_Invoice_${invoiceNo}.pdf`);
   };
 
-  const handleDownloadPdf = async (bill) => {
-    const issuedAt = bill?.createdAt ? new Date(bill.createdAt) : new Date();
-    const dateText = issuedAt.toLocaleDateString();
-    const invoiceNo = String(bill?._id || "").slice(-8).toUpperCase() || "N/A";
-    const billData = resolveBillFromOrder(bill, orders);
-
-    const invoice = document.createElement("div");
-    invoice.style.position = "fixed";
-    invoice.style.left = "-10000px";
-    invoice.style.top = "0";
-    invoice.style.width = "800px";
-    invoice.style.background = "#ffffff";
-    invoice.style.padding = "24px";
-    invoice.style.fontFamily = "Arial, sans-serif";
-    invoice.style.color = "#0f172a";
-
-    invoice.innerHTML = `
-      <div style="border:1px solid #cbd5e1; border-radius:12px; overflow:hidden;">
-        <div style="background:linear-gradient(135deg,#0f3b5f,#0d9488); color:#fff; padding:18px 20px; display:flex; justify-content:space-between; align-items:flex-start;">
-          <div>
-            <h1 style="margin:0; font-size:28px; letter-spacing:0.2px;">Medix Pharmacy</h1>
-          </div>
-          <div style="text-align:right; font-size:13px; line-height:1.6;">
-            <div><strong>Bill ID:</strong> ${escapeHtml(invoiceNo)}</div>
-            <div><strong>Date:</strong> ${escapeHtml(dateText)}</div>
-          </div>
-        </div>
-
-        <div style="padding:18px 20px 8px;">
-          <p style="margin:0 0 8px;"><strong>Customer name:</strong> ${escapeHtml(bill?.customerName || customerName || "Walk-in")}</p>
-        </div>
-
-        <div style="padding:0 20px 18px;">
-          <table style="width:100%; border-collapse:collapse; font-size:14px;">
-            <thead>
-              <tr style="background:#f8fafc;">
-                <th style="border:1px solid #cbd5e1; padding:10px; text-align:left;">Medicine name</th>
-                <th style="border:1px solid #cbd5e1; padding:10px; text-align:left;">Quantity</th>
-                <th style="border:1px solid #cbd5e1; padding:10px; text-align:left;">Price</th>
-                <th style="border:1px solid #cbd5e1; padding:10px; text-align:left;">Total amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td style="border:1px solid #cbd5e1; padding:10px;">${escapeHtml(billData.medicineName)}</td>
-                <td style="border:1px solid #cbd5e1; padding:10px;">${escapeHtml(billData.quantity)}</td>
-                <td style="border:1px solid #cbd5e1; padding:10px;">${escapeHtml(formatRs(billData.price))}</td>
-                <td style="border:1px solid #cbd5e1; padding:10px; font-weight:700;">${escapeHtml(formatRs(billData.total))}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div style="border-top:1px solid #e2e8f0; background:#f8fafc; padding:14px 20px; font-size:13px; color:#475569; text-align:center;">
-          Thank you for your purchase
-        </div>
-      </div>
-    `;
-
-    document.body.appendChild(invoice);
-
+  const handleDownloadInvoice = async (bill) => {
+    if (!bill) return;
+    setError("");
+    setDownloadingId(String(bill._id));
     try {
-      const canvas = await html2canvas(invoice, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: "#ffffff",
+      await new Promise((r) => {
+        setTimeout(r, 0);
       });
-
-      const image = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("p", "mm", "a4");
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const margin = 8;
-      const width = pdfWidth - margin * 2;
-      const height = (canvas.height * width) / canvas.width;
-
-      pdf.addImage(image, "PNG", margin, margin, width, height);
-      pdf.save(`Medix_Bill_${invoiceNo}.pdf`);
+      downloadInvoicePdf(bill);
     } catch (err) {
-      setError(err.message || "Failed to generate bill PDF.");
+      setError(err?.message || "Could not create the PDF. Try again.");
     } finally {
-      document.body.removeChild(invoice);
+      setDownloadingId(null);
     }
   };
 
   return (
     <div className="public-main">
-      <section className="public-hero-card cart-shell">
-        <div className="inventory-head">
-          <div>
-            <p className="public-kicker">My Billing</p>
-            <h1 className="public-title inventory-title">Your Bills</h1>
-            <p className="public-subtitle">Generate bill for approved orders and download your invoice PDF.</p>
+      <MedixPublicHero
+        kicker="Billing"
+        title="Billing details for your orders"
+        subtitle="When an invoice exists, each row shows the invoice and order numbers, amount, and billing date; the PDF includes full line items and payment details."
+        image={billingHeroImage}
+        imageAlt="Pharmacist at the counter preparing medicine"
+        className="cart-shell"
+      />
+
+        {!isLoggedIn ? (
+          <div className="medix-guest-prompt" role="status">
+            <p className="medix-guest-emoji" aria-hidden="true">
+              📋
+            </p>
+            <h2>Sign in to view billing</h2>
+            <p>Sign in to see billing information for your orders.</p>
+            <div className="medix-guest-prompt__actions">
+              <MedixButton to="/login" state={{ from: "/billing" }} variant="primary">
+                Sign in
+              </MedixButton>
+              <MedixButton to="/signup" variant="ghost">
+                Create account
+              </MedixButton>
+            </div>
           </div>
-        </div>
+        ) : (
+          <>
+            {error && <div className="alert alert-error">{error}</div>}
 
-        {error && <div className="alert alert-error">{error}</div>}
-        {success && <div className="alert alert-success">{success}</div>}
-
-        <div className="card table-card">
-          <h2>Approved Orders Ready For Bill</h2>
-          {loading ? (
-            <p className="loading">Loading...</p>
-          ) : readyToGenerate.length === 0 ? (
-            <p className="empty">No approved orders ready for bill generation.</p>
-          ) : (
-            <div className="table-wrap">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Medicine</th>
-                    <th>Qty</th>
-                    <th>Price</th>
-                    <th>Total</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {readyToGenerate.map((o) => (
-                    <tr key={o._id}>
-                      <td>{o.medicineName}</td>
-                      <td>{o.quantity}</td>
-                      <td>{formatRs(o.price)}</td>
-                      <td>{formatRs(o.totalPrice)}</td>
-                      <td>
-                        <button type="button" className="btn btn-sm btn-primary" onClick={() => handleGenerateBill(o)}>
-                          Generate Bill
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-
-        <div className="card table-card">
-          <h2>My Generated Bills</h2>
-          {loading ? (
-            <p className="loading">Loading...</p>
-          ) : ownBills.length === 0 ? (
-            <p className="empty">You do not have any bills yet.</p>
-          ) : (
-            <div className="table-wrap">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Bill ID</th>
-                    <th>Medicine</th>
-                    <th>Qty</th>
-                    <th>Total</th>
-                    <th>Date</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {ownBills.map((b) => (
-                    <tr key={b._id}>
-                      <td>{String(b._id).slice(-8).toUpperCase()}</td>
-                      <td>{b.medicineName}</td>
-                      <td>{b.quantity}</td>
-                      <td>{formatRs(b.total)}</td>
-                      <td>{b.createdAt ? new Date(b.createdAt).toLocaleDateString() : "-"}</td>
-                      <td>
-                        <button type="button" className="btn btn-sm btn-secondary" onClick={() => handleDownloadPdf(b)}>
-                          Download PDF
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </section>
+            {loading ? (
+              <p className="loading">Loading billing…</p>
+            ) : myOrders.length === 0 ? (
+              <p className="empty">You have no orders yet. After you place orders, you will see billing details here.</p>
+            ) : (
+              <div className="ub-billing" role="list">
+                {myOrders.map((o) => {
+                  const bill = getLatestBillForOrder(o._id, bills);
+                  return (
+                    <UserOrderBillingCard
+                      key={o._id}
+                      order={o}
+                      bill={bill}
+                      onDownloadInvoice={handleDownloadInvoice}
+                      isDownloading={!!bill && downloadingId === String(bill._id)}
+                    />
+                  );
+                })}
+              </div>
+            )}
+          </>
+        )}
     </div>
   );
 }

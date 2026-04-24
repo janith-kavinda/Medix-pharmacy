@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { usersApi } from "../api/client";
+import MedixButton from "../components/ui/MedixButton";
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -11,14 +12,12 @@ export default function SignupPage() {
     confirmPassword: "",
   });
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
     setError("");
-    setSuccess("");
   };
 
   const handleSubmit = async (e) => {
@@ -33,14 +32,18 @@ export default function SignupPage() {
       setSubmitting(true);
       setError("");
 
-      await usersApi.signup({
+      const response = await usersApi.signup({
         fullName: form.fullName,
         email: form.email,
         password: form.password,
       });
 
-      setSuccess("Account created successfully. Redirecting to login...");
-      setTimeout(() => navigate("/login"), 900);
+      if (response?.user) {
+        localStorage.setItem("medix_user", JSON.stringify(response.user));
+        navigate("/", { replace: true });
+        return;
+      }
+      setError("Account was created, but we couldn’t sign you in automatically. Please log in.");
     } catch (err) {
       setError(err.message || "Failed to create account.");
     } finally {
@@ -58,7 +61,6 @@ export default function SignupPage() {
         </div>
 
         {error && <div className="alert alert-error">{error}</div>}
-        {success && <div className="alert alert-success">{success}</div>}
 
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-row">
@@ -114,9 +116,9 @@ export default function SignupPage() {
             </div>
           </div>
 
-          <button type="submit" className="btn btn-primary btn-block" disabled={submitting}>
+          <MedixButton type="submit" variant="primary" block disabled={submitting}>
             {submitting ? "Creating Account..." : "Sign Up"}
-          </button>
+          </MedixButton>
         </form>
 
         <p className="auth-bottom-text">

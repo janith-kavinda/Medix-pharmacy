@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { medicinesApi } from "../api/client";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
+import { medicinesApi } from "../api/client";
+import MedixButton from "../components/ui/MedixButton";
 // Pharmacy images for fallback display
 import pharmacyImg1 from "../images/alexander-grey-FEPfs43yiPE-unsplash.jpg";
 import pharmacyImg2 from "../images/christina-victoria-craft-ZHys6xN7sUE-unsplash.jpg";
@@ -14,6 +14,17 @@ import pharmacyImg8 from "../images/shawn-powar-2vaUkcFfWtE-unsplash.jpg";
 import pharmacyImg9 from "../images/simone-van-der-koelen-HtDQ9Z64Vpo-unsplash.jpg";
 import pharmacyImg10 from "../images/thomas-kinto-2nCs2Ed_XU8-unsplash.jpg";
 import pharmacyImg11 from "../images/young-hispanic-man-pharmacist-smiling-confident-scanning-pills-bottle-pharmacy.jpg";
+
+function readLoggedIn() {
+  try {
+    const raw = localStorage.getItem("medix_user");
+    if (!raw) return false;
+    const u = JSON.parse(raw);
+    return Boolean(u?._id || u?.email);
+  } catch {
+    return false;
+  }
+}
 
 const pharmacyImages = [
   pharmacyImg1,
@@ -59,6 +70,8 @@ function getPlaceholderImage(name) {
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
+const MEDICINES_PAGE_SIZE = 2;
+
 function getGoogleImagesUrl(medicineName) {
   return `https://www.google.com/search?q=${encodeURIComponent(medicineName + ' medicine')}&tbm=isch`;
 }
@@ -82,6 +95,7 @@ function getPharmacyFallbackImage(medicineName) {
 
 export default function PublicMedicinesPage() {
   const navigate = useNavigate();
+  const [isLoggedIn, setIsLoggedIn] = useState(() => readLoggedIn());
   const [medicines, setMedicines] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -89,7 +103,9 @@ export default function PublicMedicinesPage() {
   const [selectedMedicine, setSelectedMedicine] = useState(null);
   const [manufacturerFilter, setManufacturerFilter] = useState("");
   const [priceRange, setPriceRange] = useState([0, 10000]);
+  const [medicinePage, setMedicinePage] = useState(0);
   const [cartItems, setCartItems] = useState(() => {
+    if (!readLoggedIn()) return [];
     try {
       const raw = localStorage.getItem("medix_selected_medicines");
       const parsed = raw ? JSON.parse(raw) : [];
@@ -98,6 +114,26 @@ export default function PublicMedicinesPage() {
       return [];
     }
   });
+
+  const syncAuth = useCallback(() => {
+    setIsLoggedIn(readLoggedIn());
+  }, []);
+
+  useEffect(() => {
+    const on = () => syncAuth();
+    window.addEventListener("focus", on);
+    window.addEventListener("storage", on);
+    return () => {
+      window.removeEventListener("focus", on);
+      window.removeEventListener("storage", on);
+    };
+  }, [syncAuth]);
+
+  const goToLogin = useCallback(() => {
+    navigate("/login", { state: { from: "/medicines" } });
+  }, [navigate]);
+
+  const displayCart = isLoggedIn ? cartItems : [];
 
   useEffect(() => {
     const fetchMedicines = async () => {
@@ -115,6 +151,20 @@ export default function PublicMedicinesPage() {
 
     fetchMedicines();
   }, []);
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      setCartItems([]);
+      return;
+    }
+    try {
+      const raw = localStorage.getItem("medix_selected_medicines");
+      const parsed = raw ? JSON.parse(raw) : [];
+      setCartItems(normalizeCartList(parsed));
+    } catch {
+      setCartItems([]);
+    }
+  }, [isLoggedIn]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -136,6 +186,35 @@ export default function PublicMedicinesPage() {
     });
   }, [medicines, search, manufacturerFilter, priceRange]);
 
+  const medicinePageCount = useMemo(
+    () => Math.max(0, Math.ceil(filtered.length / MEDICINES_PAGE_SIZE)),
+    [filtered.length]
+  );
+
+  const pagedFiltered = useMemo(() => {
+    const start = medicinePage * MEDICINES_PAGE_SIZE;
+    return filtered.slice(start, start + MEDICINES_PAGE_SIZE);
+  }, [filtered, medicinePage]);
+
+  const medicineRangeFrom =
+    filtered.length === 0 ? 0 : medicinePage * MEDICINES_PAGE_SIZE + 1;
+  const medicineRangeTo = Math.min(
+    (medicinePage + 1) * MEDICINES_PAGE_SIZE,
+    filtered.length
+  );
+
+  useEffect(() => {
+    setMedicinePage(0);
+  }, [search, manufacturerFilter, priceRange[0], priceRange[1]]);
+
+  useEffect(() => {
+    setMedicinePage((p) => {
+      if (filtered.length === 0) return 0;
+      const maxP = Math.max(0, Math.ceil(filtered.length / MEDICINES_PAGE_SIZE) - 1);
+      return p > maxP ? maxP : p;
+    });
+  }, [filtered.length]);
+
   const manufacturers = useMemo(() => {
     const unique = new Set(medicines.map((m) => String(m?.manufacturer || "").trim()).filter(Boolean));
     return Array.from(unique).sort();
@@ -149,6 +228,10 @@ export default function PublicMedicinesPage() {
   };
 
   const handleAdd = (medicine) => {
+    if (!readLoggedIn()) {
+      goToLogin();
+      return;
+    }
     const raw = localStorage.getItem("medix_selected_medicines");
     let selected = [];
     try {
@@ -184,6 +267,12 @@ export default function PublicMedicinesPage() {
   };
 
   const setMedicineQty = (medicine, nextQty) => {
+    if (!readLoggedIn()) {
+      if (Number(nextQty) > 0) {
+        goToLogin();
+      }
+      return;
+    }
     const raw = localStorage.getItem("medix_selected_medicines");
     let selected = [];
     try {
@@ -230,8 +319,8 @@ export default function PublicMedicinesPage() {
   };
 
   const cartCount = useMemo(
-    () => cartItems.reduce((sum, item) => sum + Number(item.quantity || 1), 0),
-    [cartItems]
+    () => displayCart.reduce((sum, item) => sum + Number(item.quantity || 1), 0),
+    [displayCart]
   );
 
   const publicPageStyles = `
@@ -260,6 +349,39 @@ export default function PublicMedicinesPage() {
       gap: 2rem;
       margin-top: 2rem;
       width: 100%;
+    }
+
+    .public-medicine-catalog-pagination {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+      margin-top: 1.75rem;
+      padding-top: 1.1rem;
+      border-top: 1px solid rgba(0, 82, 155, 0.12);
+    }
+
+    .public-medicine-catalog-paging-hint {
+      margin: 0;
+      font-size: 0.86rem;
+      color: #64748b;
+    }
+
+    .public-medicine-catalog-paging-btns {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 0.65rem 1rem;
+    }
+
+    .public-medicine-catalog-paging-num {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #0b3e67;
+      min-width: 6.5rem;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
     }
 
     .medicine-card {
@@ -664,7 +786,14 @@ export default function PublicMedicinesPage() {
 
   return (
     <div className="public-catalog-page-full">
-      <section className="public-hero-card medicine-catalog-shell">
+      <section
+        className="public-hero-card medicine-catalog-shell"
+        style={{
+          backgroundImage: `linear-gradient(125deg, rgba(255, 255, 255, 0.97) 0%, rgba(230, 242, 255, 0.92) 50%, rgba(255, 255, 255, 0.96) 100%), url(${pharmacyImg5})`,
+          backgroundSize: "cover",
+          backgroundPosition: "right 25% center",
+        }}
+      >
         <div className="inventory-head">
           <div>
             <p className="public-kicker">Medicine Catalog</p>
@@ -682,9 +811,9 @@ export default function PublicMedicinesPage() {
                 aria-label="Search medicines"
               />
             </div>
-            <button type="button" className="btn btn-primary" onClick={() => navigate("/cart")}>
+            <MedixButton type="button" variant="primary" onClick={() => navigate("/cart")}>
               Go to Cart ({cartCount})
-            </button>
+            </MedixButton>
           </div>
         </div>
 
@@ -719,16 +848,16 @@ export default function PublicMedicinesPage() {
               />
             </div>
 
-            <button 
-              type="button" 
-              className="btn btn-secondary"
+            <MedixButton
+              type="button"
+              variant="muted"
               onClick={() => {
                 setManufacturerFilter("");
                 setPriceRange([0, 10000]);
               }}
             >
               Reset Filters
-            </button>
+            </MedixButton>
           </div>
         )}
 
@@ -739,14 +868,15 @@ export default function PublicMedicinesPage() {
         ) : filtered.length === 0 ? (
           <p className="empty">No medicines found.</p>
         ) : (
-          <div className="medicine-card-grid">
-            {filtered.map((med) => {
-              const medId = getCartId(med);
-              const inCart = cartItems.find((item) => getCartId(item) === medId);
-              const selectedQty = Number(inCart?.quantity || 0);
-              const availableQty = Math.max(0, Number(med.quantity || 0));
-              const canIncrease = selectedQty < availableQty;
-              return (
+          <>
+            <div className="medicine-card-grid">
+              {pagedFiltered.map((med) => {
+                const medId = getCartId(med);
+                const inCart = displayCart.find((item) => getCartId(item) === medId);
+                const selectedQty = Number(inCart?.quantity || 0);
+                const availableQty = Math.max(0, Number(med.quantity || 0));
+                const canIncrease = selectedQty < availableQty;
+                return (
                 <article className="medicine-card" key={med._id}>
                   <a 
                     href={getGoogleImagesUrl(med.name)} 
@@ -786,13 +916,15 @@ export default function PublicMedicinesPage() {
                       <span className="medicine-card-qty">Stock: {availableQty}</span>
                     </div>
 
-                    <button
+                    <MedixButton
                       type="button"
-                      className="btn btn-view-details btn-block"
+                      variant="ghost"
+                      block
+                      className="btn-view-details"
                       onClick={() => setSelectedMedicine(med)}
                     >
                       View Details
-                    </button>
+                    </MedixButton>
 
                     <div className="row-actions">
                       <button
@@ -813,19 +945,62 @@ export default function PublicMedicinesPage() {
                         +
                       </button>
                     </div>
-                    <button
+                    <MedixButton
                       type="button"
-                      className="btn btn-primary btn-block"
+                      variant="primary"
+                      block
                       onClick={() => handleAdd(med)}
                       disabled={!canIncrease}
                     >
-                      {canIncrease ? "Add to Cart" : "Out of Stock"}
-                    </button>
+                      {!canIncrease
+                        ? "Out of stock"
+                        : !isLoggedIn
+                          ? "Sign in to add to cart"
+                          : "Add to cart"}
+                    </MedixButton>
                   </div>
                 </article>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+            {medicinePageCount > 1 && (
+              <div
+                className="public-medicine-catalog-pagination"
+                aria-label="Medicine list pages"
+              >
+                <p className="public-medicine-catalog-paging-hint">
+                  Showing {medicineRangeFrom}–{medicineRangeTo} of {filtered.length} medicines
+                </p>
+                <div className="public-medicine-catalog-paging-btns">
+                  <MedixButton
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    disabled={medicinePage <= 0}
+                    onClick={() => setMedicinePage((p) => Math.max(0, p - 1))}
+                    aria-label="Previous page of medicines"
+                  >
+                    Previous
+                  </MedixButton>
+                  <span className="public-medicine-catalog-paging-num" aria-hidden="true">
+                    Page {medicinePage + 1} / {medicinePageCount}
+                  </span>
+                  <MedixButton
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    disabled={medicinePage >= medicinePageCount - 1}
+                    onClick={() =>
+                      setMedicinePage((p) => Math.min(medicinePageCount - 1, p + 1))
+                    }
+                    aria-label="Next page of medicines"
+                  >
+                    Next
+                  </MedixButton>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </section>
 
@@ -895,17 +1070,24 @@ export default function PublicMedicinesPage() {
                 </div>
               )}
 
-              <button
+              <MedixButton
                 type="button"
-                className="btn btn-primary btn-block"
+                variant="primary"
+                block
                 onClick={() => {
                   handleAdd(selectedMedicine);
-                  setSelectedMedicine(null);
+                  if (isLoggedIn) {
+                    setSelectedMedicine(null);
+                  }
                 }}
                 disabled={Number(selectedMedicine.quantity || 0) === 0}
               >
-                Add to Cart
-              </button>
+                {Number(selectedMedicine.quantity || 0) === 0
+                  ? "Out of stock"
+                  : !isLoggedIn
+                    ? "Sign in to add to cart"
+                    : "Add to cart"}
+              </MedixButton>
             </div>
           </div>
         </>

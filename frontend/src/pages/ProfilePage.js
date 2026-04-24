@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { usersApi } from "../api/client";
+import AdminPageShell from "../components/AdminPageShell";
 
 export default function ProfilePage() {
   const navigate = useNavigate();
@@ -18,14 +19,14 @@ export default function ProfilePage() {
   useEffect(() => {
     const raw = localStorage.getItem("medix_user");
     if (!raw) {
-      navigate("/login");
+      navigate("/admin/login");
       return;
     }
 
     try {
       const user = JSON.parse(raw);
       if (!user?._id) {
-        navigate("/login");
+        navigate("/admin/login");
         return;
       }
 
@@ -36,7 +37,7 @@ export default function ProfilePage() {
         email: user.email || "",
       }));
     } catch {
-      navigate("/login");
+      navigate("/admin/login");
     }
   }, [navigate]);
 
@@ -89,10 +90,11 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="page">
+    <AdminPageShell breadcrumb="Profile">
+    <div className="ph-admin-profile">
       <div className="page-header">
         <div>
-          <h1>Edit Profile</h1>
+          <h1>Edit profile</h1>
           <p className="page-subtitle">Update your admin account details.</p>
         </div>
       </div>
@@ -160,5 +162,6 @@ export default function ProfilePage() {
         </form>
       </div>
     </div>
+    </AdminPageShell>
   );
 }
