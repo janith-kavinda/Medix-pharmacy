@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { usersApi } from "../api/client";
+import MedixButton from "../components/ui/MedixButton";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -28,7 +29,7 @@ export default function LoginPage() {
       if (response?.user) {
         localStorage.setItem("medix_user", JSON.stringify(response.user));
       }
-      navigate("/billing");
+      navigate("/", { replace: true });
     } catch (err) {
       setError(err.message || "Login failed.");
     } finally {
@@ -54,7 +55,7 @@ export default function LoginPage() {
               id="email"
               name="email"
               type="email"
-              placeholder="admin@medix.com"
+              placeholder="you@email.com"
               value={form.email}
               onChange={handleChange}
               required
@@ -74,17 +75,15 @@ export default function LoginPage() {
             />
           </div>
 
-          <button type="submit" className="btn btn-primary btn-block" disabled={submitting}>
+          <MedixButton type="submit" variant="primary" block disabled={submitting}>
             {submitting ? "Signing In..." : "Login"}
-          </button>
+          </MedixButton>
         </form>
 
         <p className="auth-bottom-text">
           Don&apos;t have an account? <Link to="/signup">Create one</Link>
         </p>
-        <p className="auth-bottom-text">
-          Admin account? <Link to="/admin/login">Use admin login</Link>
-        </p>
+        
       </div>
     </div>
   );

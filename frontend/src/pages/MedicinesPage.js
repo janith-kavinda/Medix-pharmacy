@@ -1,25 +1,19 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react';
 import html2canvas from 'html2canvas';
 import { medicinesApi } from '../api/client';
+import AdminPageShell from '../components/AdminPageShell';
 
 const medicinePageStyles = `
-  .inventory-page-full {
-    padding: 0 !important;
+  .ph-admin-inventory.inventory-page-full {
     display: flex;
     flex-direction: column;
+    gap: 0;
   }
 
-  .inventory-page-full > .page-header {
-    padding: 28px 32px;
-    background: linear-gradient(135deg, rgba(10, 58, 46, 0.03) 0%, rgba(0, 217, 163, 0.02) 100%);
-    border-bottom: 1px solid rgba(0, 217, 163, 0.12);
-    margin-bottom: 0;
-  }
-
-  .inventory-page-full > .card {
-    margin: 0;
-    border-radius: 0;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  .ph-content .ph-admin-inventory .inventory-toolbar,
+  .ph-content .ph-admin-inventory .card,
+  .ph-content .ph-admin-inventory .table-card {
+    border-radius: 20px;
   }
 
   .medicine-image-thumb {
@@ -75,7 +69,7 @@ const medicinePageStyles = `
     height: 120px;
     border-radius: 12px;
     overflow: hidden;
-    border: 2px solid rgba(0, 217, 163, 0.3);
+    border: 2px solid rgba(14, 165, 233, 0.35);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -99,10 +93,6 @@ const medicinePageStyles = `
   }
 
   @media (max-width: 900px) {
-    .inventory-page-full > .page-header {
-      padding: 20px 16px;
-    }
-    
     .medicine-image-thumb {
       width: 40px;
       height: 40px;
@@ -600,9 +590,9 @@ export default function MedicinesPage() {
   };
 
   return (
-    <>
+    <AdminPageShell breadcrumb="Medicines">
       <style>{medicinePageStyles}</style>
-      <div className="page inventory-page inventory-page-full">
+      <div className="inventory-page inventory-page-full ph-admin-inventory">
       <div className="page-header">
         <div>
           <h1>Medicines</h1>
@@ -895,6 +885,6 @@ export default function MedicinesPage() {
         )}
       </div>
       </div>
-    </>
+    </AdminPageShell>
   );
 }

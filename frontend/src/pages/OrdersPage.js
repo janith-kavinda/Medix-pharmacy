@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import html2canvas from "html2canvas";
 import { ordersApi } from "../api/client";
+import AdminPageShell from "../components/AdminPageShell";
 
 function formatRs(amount) {
 	const value = Number(amount) || 0;
@@ -521,7 +522,8 @@ export default function OrdersPage() {
 	};
 
 	return (
-		<div className="page orders-page">
+		<AdminPageShell breadcrumb="Orders">
+		<div className="orders-page ph-admin-orders">
 			<div className="page-header">
 				<div>
 					<h1>Orders</h1>
@@ -795,6 +797,6 @@ export default function OrdersPage() {
 				)}
 			</div>
 		</div>
+		</AdminPageShell>
 	);
 }
-

@@ -1,5 +1,5 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useCallback, useEffect, useState } from "react";
+import MedixButton from "../components/ui/MedixButton";
 import "./LandingPage.css";
 import pharmacistStockImage from "../images/female-pharmacist-with-table-checking-stock-pharmacy.jpg";
 import pharmacistCounterImage from "../images/pharmacist-day-celebration-with-male-pharmacist.jpg";
@@ -116,8 +116,28 @@ const galleryImages = [
 ];
 
 export default function LandingPage() {
-  const currentUser = getCurrentUser();
-  const isLoggedIn = Boolean(currentUser?.email || currentUser?._id);
+  const [isLoggedIn, setIsLoggedIn] = useState(() =>
+    Boolean(getCurrentUser()?._id || getCurrentUser()?.email)
+  );
+
+  const syncAuth = useCallback(() => {
+    const u = getCurrentUser();
+    setIsLoggedIn(Boolean(u?._id || u?.email));
+  }, []);
+
+  const ctaUser = getCurrentUser();
+  const isAdmin = Boolean(
+    ctaUser && String(ctaUser?.role).toLowerCase() === "admin"
+  );
+
+  useEffect(() => {
+    window.addEventListener("focus", syncAuth);
+    window.addEventListener("storage", syncAuth);
+    return () => {
+      window.removeEventListener("focus", syncAuth);
+      window.removeEventListener("storage", syncAuth);
+    };
+  }, [syncAuth]);
 
   return (
     <div className="landing-home">
@@ -130,13 +150,20 @@ export default function LandingPage() {
           </p>
 
           <div className="landing-hero-actions">
-            <Link to={isLoggedIn ? "/app" : "/login"} className="landing-btn landing-btn-primary">
-              {isLoggedIn ? "Open Dashboard" : "Start Managing"}
-              <ArrowRightIcon />
-            </Link>
-            <Link to="/medicines" className="landing-btn landing-btn-ghost">
+            {isLoggedIn ? (
+              <MedixButton to="/cart" variant="primary">
+                View my cart
+                <ArrowRightIcon />
+              </MedixButton>
+            ) : (
+              <MedixButton to="/login" variant="primary">
+                Log in
+                <ArrowRightIcon />
+              </MedixButton>
+            )}
+            <MedixButton to="/medicines" variant="ghost">
               Browse Medicines
-            </Link>
+            </MedixButton>
           </div>
         </div>
 
@@ -230,9 +257,12 @@ export default function LandingPage() {
           <p>Set up your workspace and manage medicines, orders, and billing from a single professional dashboard.</p>
         </div>
         <div className="landing-cta-actions">
-          <Link to={isLoggedIn ? "/app" : "/signup"} className="landing-btn landing-btn-primary">
-            {isLoggedIn ? "Go to Dashboard" : "Create Account"}
-          </Link>
+          <MedixButton
+            to={!isLoggedIn ? "/signup" : isAdmin ? "/admin" : "/profile"}
+            variant="primary"
+          >
+            {!isLoggedIn ? "Create Account" : isAdmin ? "Go to Dashboard" : "My account"}
+          </MedixButton>
           <div className="landing-cta-note">
             <ShieldIcon />
             <span>Secure data handling and role-based access</span>

@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { medicinesApi, ordersApi } from "../api/client";
+import { billingsApi, medicinesApi, ordersApi } from "../api/client";
+import MedixButton from "../components/ui/MedixButton";
 
 function getCartId(item) {
   return String(item?._id || item?.id || item?.name || "");
@@ -95,7 +96,7 @@ export default function PaymentPage() {
         }
       }
 
-      await Promise.all(
+      const createdOrders = await Promise.all(
         items.map((item) => {
           const qty = Number(item.quantity || 1);
           const price = Number(item.price || 0);
@@ -109,6 +110,19 @@ export default function PaymentPage() {
             status: "Approved",
           });
         })
+      );
+
+      await Promise.all(
+        createdOrders.map((order) =>
+          billingsApi.create({
+            orderId: String(order._id),
+            customerName: String(order.customerName || customerName),
+            medicineName: String(order.medicineName),
+            quantity: Number(order.quantity),
+            price: Number(order.price),
+            paymentStatus: "Paid",
+          })
+        )
       );
 
       await Promise.all(
@@ -242,11 +256,20 @@ export default function PaymentPage() {
               </div>
 
               <div className="payment-demo-actions">
-                <button className="btn btn-primary payment-demo-btn" type="button" onClick={payNow} disabled={submitting || items.length === 0}>
+                <MedixButton
+                  type="button"
+                  className="payment-demo-btn"
+                  block
+                  variant="primary"
+                  onClick={payNow}
+                  disabled={submitting || items.length === 0}
+                >
                   {submitting ? "Processing..." : "Pay Now"}
-                </button>
+                </MedixButton>
                 <div className="payment-demo-center">
-                  <button type="button" className="btn btn-link" onClick={() => navigate("/cart")}>Back to cart</button>
+                  <MedixButton type="button" variant="ghost" onClick={() => navigate("/cart")}>
+                    Back to cart
+                  </MedixButton>
                 </div>
               </div>
             </div>
