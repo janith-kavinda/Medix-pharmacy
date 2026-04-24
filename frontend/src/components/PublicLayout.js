@@ -7,7 +7,7 @@ export default function PublicLayout() {
   return (
     <div className="public-layout">
       <PublicHeader />
-      <main className="public-content">
+      <main className="public-content public-content--medix">
         <Outlet />
       </main>
       <Footer variant="public" />

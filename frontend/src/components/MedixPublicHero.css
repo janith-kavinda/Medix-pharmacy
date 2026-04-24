@@ -1,0 +1,67 @@
+.medix-public-hero {
+  position: relative;
+  padding: 0;
+  margin-bottom: 0.5rem;
+}
+
+.medix-public-hero::before,
+.public-hero-card::before {
+  z-index: 0;
+}
+
+.medix-public-hero__row {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.2rem 1.75rem;
+  padding: 2rem 2.1rem;
+  align-items: start;
+}
+
+@media (min-width: 880px) {
+  .medix-public-hero__row {
+    grid-template-columns: 1.15fr 0.85fr;
+  }
+}
+
+.medix-public-hero__copy {
+  min-width: 0;
+}
+
+.medix-public-hero__text {
+  max-width: 100%;
+}
+
+.medix-public-hero__media {
+  min-width: 0;
+  align-self: center;
+}
+
+.medix-public-hero__img-wrap {
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 82, 155, 0.18);
+  box-shadow: 0 10px 28px rgba(0, 82, 155, 0.12);
+  max-height: 200px;
+}
+
+@media (min-width: 880px) {
+  .medix-public-hero__img-wrap {
+    max-height: 220px;
+  }
+}
+
+.medix-public-hero__img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  display: block;
+  vertical-align: middle;
+}
+
+@media (min-width: 880px) {
+  .medix-public-hero__img {
+    height: 220px;
+  }
+}

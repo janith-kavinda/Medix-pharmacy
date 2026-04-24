@@ -1,12 +1,12 @@
-import React, { useRef } from "react";
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import React from "react";
+import { NavLink, useNavigate } from "react-router-dom";
 
 const styles = `
-  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Syne:wght@500;600&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&display=swap');
 
   .public-topbar {
-    background: linear-gradient(120deg, rgba(255, 255, 255, 0.62), rgba(230, 255, 247, 0.42));
-    border-bottom: 1px solid rgba(15, 110, 86, 0.2);
+    background: linear-gradient(120deg, #ffffff 0%, #e7f0fb 50%, #dce8f8 100%);
+    border-bottom: 1px solid rgba(0, 82, 155, 0.22);
     width: 100%;
     max-width: none;
     margin: 0;
@@ -17,13 +17,13 @@ const styles = `
     display: flex;
     align-items: center;
     justify-content: space-between;
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Outfit', system-ui, sans-serif;
     position: sticky;
     top: 0;
     z-index: 120;
     backdrop-filter: blur(12px) saturate(140%);
     -webkit-backdrop-filter: blur(12px) saturate(140%);
-    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px 24px rgba(0, 82, 155, 0.1);
   }
 
   .public-brand {
@@ -37,7 +37,7 @@ const styles = `
   .public-brand-icon {
     width: 34px;
     height: 34px;
-    background: linear-gradient(135deg, #0F6E56, #1D9E75);
+    background: linear-gradient(140deg, #00529b, #006ecf);
     border-radius: 9px;
     display: flex;
     align-items: center;
@@ -56,10 +56,10 @@ const styles = `
   }
 
   .public-brand-text {
-    font-family: 'Syne', sans-serif;
+    font-family: 'Outfit', sans-serif;
     font-size: 15px;
-    font-weight: 600;
-    color: #0F4035;
+    font-weight: 700;
+    color: #0b2e4a;
     letter-spacing: -0.2px;
   }
 
@@ -69,8 +69,8 @@ const styles = `
     gap: 2px;
     padding: 4px;
     border-radius: 12px;
-    background: rgba(255, 255, 255, 0.35);
-    border: 1px solid rgba(15, 110, 86, 0.12);
+    background: rgba(255, 255, 255, 0.55);
+    border: 1px solid rgba(0, 82, 155, 0.15);
   }
 
   .public-nav-link {
@@ -78,63 +78,131 @@ const styles = `
     border-radius: 7px;
     font-size: 13.5px;
     font-weight: 500;
-    color: #6b7280;
+    color: #3e5f7a;
     text-decoration: none;
     transition: background 0.15s, color 0.15s;
   }
 
   .public-nav-link:hover {
-    background: #E1F5EE;
-    color: #0F6E56;
+    background: #dbeafe;
+    color: #00529b;
   }
 
   .public-nav-link.active {
-    background: #E1F5EE;
-    color: #0F6E56;
+    background: #c7ddfc;
+    color: #003d75;
     font-weight: 600;
   }
 
   .public-nav-divider {
     width: 1px;
     height: 20px;
-    background: rgba(15, 110, 86, 0.12);
+    background: rgba(0, 82, 155, 0.2);
     margin: 0 6px;
     flex-shrink: 0;
   }
 
   .public-profile {
-    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 6px;
     margin-left: 4px;
   }
 
-  .public-profile-summary {
+  .public-profile-link {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 3px 3px;
+    padding: 4px 10px 4px 4px;
     border-radius: 30px;
-    border: 1px solid rgba(15, 110, 86, 0.15);
-    background: rgba(255, 255, 255, 0.58);
+    border: 1px solid rgba(0, 82, 155, 0.18);
+    background: rgba(255, 255, 255, 0.7);
     cursor: pointer;
-    list-style: none;
-    transition: background 0.15s, border-color 0.15s;
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
     user-select: none;
   }
 
-  .public-profile-summary::-webkit-details-marker {
-    display: none;
+  .public-profile-link:hover {
+    background: #e8f1fd;
+    border-color: #5eb0ff;
   }
 
-  .public-profile-summary:hover {
-    background: #E1F5EE;
-    border-color: #5DCAA5;
+  .public-profile-link.public-profile-link--active {
+    background: #dbeafe;
+    border-color: #00529b;
+    box-shadow: 0 0 0 1px rgba(0, 82, 155, 0.25);
+  }
+
+  .public-profile-link-label {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #0b2e4a;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 520px) {
+    .public-profile-link-label {
+      display: none;
+    }
+  }
+
+  .public-header-logout {
+    padding: 6px 10px;
+    border-radius: 7px;
+    border: 1px solid rgba(0, 82, 155, 0.2);
+    background: rgba(255, 255, 255, 0.6);
+    font-size: 12.5px;
+    font-weight: 600;
+    font-family: 'Outfit', sans-serif;
+    color: #3e5f7a;
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+  }
+
+  .public-header-logout:hover {
+    background: #fef2f2;
+    border-color: rgba(220, 38, 38, 0.35);
+    color: #b91c1c;
+  }
+
+  .public-header-signin {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 4px;
+    padding: 7px 16px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-weight: 600;
+    font-family: 'Outfit', sans-serif;
+    text-decoration: none;
+    color: #ffffff;
+    background: linear-gradient(140deg, #00529b, #006ecf);
+    border: 1px solid rgba(0, 82, 155, 0.4);
+    box-shadow: 0 4px 12px rgba(0, 82, 155, 0.22);
+    transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+    white-space: nowrap;
+  }
+
+  .public-header-signin:hover {
+    filter: brightness(1.04);
+    box-shadow: 0 6px 16px rgba(0, 82, 155, 0.32);
+  }
+
+  .public-header-signin.active {
+    box-shadow: 0 0 0 2px rgba(0, 110, 207, 0.4);
   }
 
   .public-avatar {
     width: 30px;
     height: 30px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #0F6E56, #5DCAA5);
+    background: linear-gradient(140deg, #00529b, #3d9ce8);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -144,59 +212,14 @@ const styles = `
     flex-shrink: 0;
   }
 
-  .public-profile-menu {
-    position: absolute;
-    right: 0;
-    top: calc(100% + 8px);
-    background: rgba(255, 255, 255, 0.96);
-    border: 1px solid rgba(15, 110, 86, 0.12);
-    border-radius: 10px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    min-width: 160px;
-    padding: 4px;
-    z-index: 100;
-  }
-
-  .public-profile-menu .menu-item {
-    display: block;
-    width: 100%;
-    padding: 8px 12px;
-    border-radius: 7px;
-    border: none;
-    background: none;
-    font-size: 13.5px;
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 500;
-    color: #374151;
-    text-align: left;
-    cursor: pointer;
-    text-decoration: none;
-    transition: background 0.12s, color 0.12s;
-    box-sizing: border-box;
-  }
-
-  .public-profile-menu .menu-item:hover {
-    background: #E1F5EE;
-    color: #0F6E56;
-  }
-
-  .public-profile-menu .menu-item-danger {
-    color: #dc2626;
-  }
-
-  .public-profile-menu .menu-item-danger:hover {
-    background: #fef2f2;
-    color: #b91c1c;
-  }
-
   .public-header-crossover {
     width: 100%;
     height: 18px;
     background: linear-gradient(
       to bottom,
-      rgba(18, 82, 68, 0.2) 0%,
-      rgba(18, 82, 68, 0.08) 45%,
-      rgba(18, 82, 68, 0) 100%
+      rgba(0, 82, 155, 0.14) 0%,
+      rgba(0, 82, 155, 0.06) 45%,
+      rgba(0, 82, 155, 0) 100%
     );
     pointer-events: none;
   }
@@ -236,10 +259,12 @@ function getCurrentUser() {
 
 export default function PublicHeader() {
   const navigate = useNavigate();
-  const profileMenuRef = useRef(null);
   const currentUser = getCurrentUser();
   const isLoggedIn = Boolean(currentUser?.email || currentUser?._id);
   const displayName = currentUser?.fullName || currentUser?.email || "User";
+  const shortLabel = currentUser?.fullName
+    ? String(currentUser.fullName).trim().split(/\s+/)[0] || "Profile"
+    : "Profile";
   const initials =
     String(displayName)
       .split(" ")
@@ -249,18 +274,9 @@ export default function PublicHeader() {
       .join("") || "U";
 
   const handleLogout = () => {
-    if (profileMenuRef.current) {
-      profileMenuRef.current.removeAttribute("open");
-    }
     localStorage.removeItem("medix_user");
     localStorage.removeItem("medix_token");
     navigate("/", { replace: true });
-  };
-
-  const closeProfileMenu = () => {
-    if (profileMenuRef.current) {
-      profileMenuRef.current.removeAttribute("open");
-    }
   };
 
   return (
@@ -305,32 +321,37 @@ export default function PublicHeader() {
             Billing
           </NavLink>
 
-          {isLoggedIn && (
+          {isLoggedIn ? (
             <>
               <div className="public-nav-divider" aria-hidden="true" />
-              <details className="public-profile" ref={profileMenuRef}>
-                <summary className="public-profile-summary" aria-label="User menu">
-                  <span className="public-avatar">{initials}</span>
-                </summary>
-                <div className="public-profile-menu" role="menu">
-                  <Link
-                    to="/profile"
-                    className="menu-item"
-                    role="menuitem"
-                    onClick={closeProfileMenu}
-                  >
-                    Edit Profile
-                  </Link>
-                  <button
-                    type="button"
-                    className="menu-item menu-item-danger"
-                    onClick={handleLogout}
-                    role="menuitem"
-                  >
-                    Logout
-                  </button>
-                </div>
-              </details>
+              <div className="public-profile">
+                <NavLink
+                  to="/profile"
+                  className={({ isActive }) =>
+                    "public-profile-link" + (isActive ? " public-profile-link--active" : "")
+                  }
+                  title="View your profile"
+                  end={false}
+                >
+                  <span className="public-avatar" aria-hidden="true">
+                    {initials}
+                  </span>
+                  <span className="public-profile-link-label">{shortLabel}</span>
+                </NavLink>
+                <button type="button" className="public-header-logout" onClick={handleLogout}>
+                  Log out
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="public-nav-divider" aria-hidden="true" />
+              <NavLink
+                to="/login"
+                className={({ isActive }) => "public-header-signin" + (isActive ? " active" : "")}
+              >
+                Sign in
+              </NavLink>
             </>
           )}
         </nav>
