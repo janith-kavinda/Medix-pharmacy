@@ -60,6 +60,8 @@ export const medicinesApi = {
 
 export const ordersApi = {
   getAll: () => request('/orders'),
+  /** Uses GET /orders?userId=… so it works with any server that has the standard orders list route. */
+  getByUserId: (userId) => request(`/orders?userId=${encodeURIComponent(String(userId).trim())}`),
   getById: (id) => request(`/orders/${id}`),
   create: (data) => request('/orders', { method: 'POST', body: JSON.stringify(data) }),
   update: (id, data) => request(`/orders/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
@@ -85,4 +87,3 @@ export const usersApi = {
   update: (id, data) => request(`/users/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   delete: (id) => request(`/users/${id}`, { method: 'DELETE' }),
 };
-

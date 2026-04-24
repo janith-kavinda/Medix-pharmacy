@@ -251,6 +251,371 @@ code {
   overflow-x: auto;
 }
 
+/* —— Admin: collapsible sidebar (replaces top nav bar) —— */
+.admin-layout {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  min-height: 100vh;
+  position: relative;
+  background: var(--bg);
+}
+
+.admin-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 200;
+  width: 220px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.98);
+  border-right: 1px solid #e2e8f0;
+  box-shadow: 4px 0 20px rgba(15, 23, 42, 0.06);
+  font-family: 'Inter', -apple-system, sans-serif;
+  transition: width 0.2s ease;
+  /* allow footer drop-up menu to extend without clipping */
+  overflow: visible;
+}
+
+.admin-layout--sb-collapsed .admin-sidebar {
+  width: 72px;
+}
+
+.admin-sidebar__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 14px 10px 14px 12px;
+  gap: 4px;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.admin-layout--sb-collapsed .admin-sidebar__head {
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 8px 14px;
+  gap: 8px;
+}
+
+.admin-sidebar__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.admin-layout--sb-collapsed .admin-sidebar__brand {
+  flex: 0 0 auto;
+  justify-content: center;
+  width: 100%;
+}
+
+.admin-sidebar__mark {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #0ea5e9, #0284c7);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+}
+
+.admin-sidebar__mark svg {
+  display: block;
+}
+
+.admin-sidebar__brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  line-height: 1.15;
+}
+
+.admin-sidebar__name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+.admin-sidebar__work {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+}
+
+.admin-sidebar__chev {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #475569;
+  cursor: pointer;
+  margin-top: 2px;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.admin-sidebar__chev:hover {
+  background: #e0f2fe;
+  border-color: #7dd3fc;
+  color: #0369a1;
+}
+
+.admin-sidebar__chev-ico {
+  display: block;
+}
+
+.admin-sidebar__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 10px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.admin-sb-link {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  text-decoration: none;
+  color: #64748b;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: background 0.18s, color 0.18s;
+}
+
+.admin-layout--sb-collapsed .admin-sb-link {
+  justify-content: center;
+  padding: 10px 8px;
+}
+
+.admin-sb-ico {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.admin-sb-txt {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-sb-link:hover {
+  background: #f1f5f9;
+  color: #0ea5e9;
+}
+
+.admin-sb-link--active {
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  color: #0284c7;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.12);
+}
+
+.admin-sidebar__foot {
+  border-top: 1px solid #e2e8f0;
+  padding: 10px;
+  flex-shrink: 0;
+}
+
+.admin-sb-user {
+  position: relative;
+}
+
+.admin-sb-user__sum {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  user-select: none;
+  color: #0f172a;
+  transition: background 0.15s, border-color 0.15s;
+  border: 1px solid transparent;
+  background: none;
+  font: inherit;
+  text-align: left;
+  margin: 0;
+}
+
+.admin-sb-user__sum:hover {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+}
+
+.admin-layout--sb-collapsed .admin-sb-user__sum {
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 8px 4px 6px;
+  gap: 4px;
+}
+
+.admin-sb-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #0ea5e9, #0284c7);
+  flex-shrink: 0;
+}
+
+.admin-sb-user__name {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #334155;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-sb-chev {
+  flex-shrink: 0;
+  color: #94a3b8;
+  transition: transform 0.2s ease;
+}
+
+.admin-sb-chev--block {
+  display: block;
+  margin-top: 2px;
+  width: 12px;
+  height: 12px;
+}
+
+/* open = menu is shown above: chev flips to point up toward the menu */
+.admin-sb-user--open .admin-sb-chev {
+  transform: rotate(180deg);
+}
+
+.admin-sb-user--open .admin-sb-user__sum {
+  background: #f0f9ff;
+  border-color: #bae6fd;
+}
+
+/* Drop-up: panel above the user row, inside the sidebar */
+.admin-sb-user__menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: auto;
+  bottom: calc(100% + 6px);
+  margin: 0;
+  min-width: 150px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 -4px 24px rgba(15, 23, 42, 0.1);
+  padding: 4px;
+  z-index: 250;
+  animation: adminSbMenuIn 0.16s ease-out;
+}
+
+@keyframes adminSbMenuIn {
+  from {
+    opacity: 0.85;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Wider than narrow rail when collapsed: open to the right, still above bottom */
+.admin-layout--sb-collapsed .admin-sb-user__menu {
+  left: 0;
+  right: auto;
+  min-width: 180px;
+  width: max-content;
+}
+
+.admin-sb-mi {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background: none;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 0.86rem;
+  text-align: left;
+  color: #334155;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.admin-sb-mi:hover {
+  background: #e0f2fe;
+  color: #0284c7;
+}
+
+.admin-sb-mi--out {
+  color: #b91c1c;
+}
+
+.admin-sb-mi--out:hover {
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.admin-shell {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  margin-left: 220px;
+  transition: margin-left 0.2s ease;
+  min-height: 100vh;
+}
+
+.admin-layout--sb-collapsed .admin-shell {
+  margin-left: 72px;
+}
+
+.admin-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Admin routes no longer use a fixed top bar: drop extra top offset */
+.admin-shell .page {
+  padding-top: 1.5rem;
+}
+
 .page {
   flex: 1;
   padding: 2rem 2.5rem;
@@ -2070,6 +2435,12 @@ code {
   backdrop-filter: blur(8px);
   box-shadow: 0 16px 42px rgba(14, 14, 12, 0.1);
   padding: 1.35rem;
+}
+
+.auth-card-admin {
+  border-color: rgba(15, 59, 95, 0.2);
+  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+  box-shadow: 0 12px 36px rgba(15, 59, 95, 0.08);
 }
 
 .auth-head h1 {
