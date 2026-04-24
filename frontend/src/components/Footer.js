@@ -5,19 +5,19 @@ const styles = `
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
 
 .medix-footer {
-  --footer-bg: #0a3a2e;
-  --footer-bg-2: #062f27;
-  --footer-text: #e6f7f4;
-  --footer-text-secondary: #b1d4ce;
-  --footer-accent-1: #00d9a3;
-  --footer-accent-2: #00f4b8;
-  --footer-accent-3: #1dd1a1;
-  --footer-divider: rgba(0, 217, 163, 0.2);
+  --footer-bg: #021320;
+  --footer-bg-2: #0a1f2e;
+  --footer-text: #e8f1fb;
+  --footer-text-secondary: #8fb0cc;
+  --footer-accent-1: #5eb0ff;
+  --footer-accent-2: #7ec8ff;
+  --footer-accent-3: #3d8fd9;
+  --footer-divider: rgba(94, 176, 255, 0.22);
   margin-top: auto;
   position: relative;
   overflow: hidden;
   border-top: 2px solid var(--footer-divider);
-  background: linear-gradient(135deg, var(--footer-bg) 0%, var(--footer-bg-2) 100%);
+  background: linear-gradient(150deg, var(--footer-bg) 0%, var(--footer-bg-2) 55%, #021320 100%);
   font-family: 'Outfit', sans-serif;
   color: var(--footer-text);
 }
@@ -27,8 +27,8 @@ const styles = `
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(700px 300px at 5% -10%, rgba(0, 217, 163, 0.08), transparent 68%),
-    radial-gradient(500px 280px at 110% 105%, rgba(29, 209, 161, 0.06), transparent 70%);
+    radial-gradient(700px 300px at 5% -10%, rgba(0, 110, 207, 0.12), transparent 68%),
+    radial-gradient(500px 280px at 110% 105%, rgba(0, 82, 155, 0.1), transparent 70%);
   pointer-events: none;
 }
 
@@ -61,10 +61,10 @@ const styles = `
   width: 48px;
   height: 48px;
   border-radius: 12px;
-  background: linear-gradient(135deg, var(--footer-accent-1), var(--footer-accent-2));
+  background: linear-gradient(140deg, #00529b, #006ecf);
   display: grid;
   place-items: center;
-  box-shadow: 0 12px 32px rgba(0, 217, 163, 0.3);
+  box-shadow: 0 12px 32px rgba(0, 82, 155, 0.35);
   flex-shrink: 0;
 }
 
@@ -180,7 +180,7 @@ const styles = `
   gap: 7px;
   padding: 7px 12px;
   border-radius: 999px;
-  background: rgba(0, 217, 163, 0.15);
+  background: rgba(94, 176, 255, 0.12);
   border: 1px solid var(--footer-accent-1);
   font-size: 12px;
   font-weight: 700;
@@ -192,7 +192,7 @@ const styles = `
   height: 8px;
   border-radius: 50%;
   background: var(--footer-accent-1);
-  box-shadow: 0 0 12px rgba(0, 217, 163, 0.8);
+  box-shadow: 0 0 12px rgba(94, 176, 255, 0.75);
   animation: medix-pulse 2s infinite;
 }
 

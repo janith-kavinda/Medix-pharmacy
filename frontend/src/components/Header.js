@@ -23,26 +23,26 @@ export default function Header({ onLogout, userName = "Admin" }) {
 
         <nav className="topbar-nav" aria-label="Primary">
           <NavLink
-            to="/app"
+            to="/admin"
             end
             className={({ isActive }) => (isActive ? "topbar-link active" : "topbar-link")}
           >
             Home
           </NavLink>
           <NavLink
-            to="/app/medicines"
+            to="/admin/medicines"
             className={({ isActive }) => (isActive ? "topbar-link active" : "topbar-link")}
           >
             Medicines
           </NavLink>
           <NavLink
-            to="/app/orders"
+            to="/admin/orders"
             className={({ isActive }) => (isActive ? "topbar-link active" : "topbar-link")}
           >
             Orders
           </NavLink>
           <NavLink
-            to="/app/billing"
+            to="/admin/billing"
             className={({ isActive }) => (isActive ? "topbar-link active" : "topbar-link")}
           >
             Billing
@@ -94,7 +94,7 @@ export default function Header({ onLogout, userName = "Admin" }) {
                 type="button"
                 className="menu-item"
                 role="menuitem"
-                onClick={() => navigate("/app/profile")}
+                onClick={() => navigate("/admin/profile")}
               >
                 Edit Profile
               </button>
