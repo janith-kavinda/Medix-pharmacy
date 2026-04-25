@@ -18,7 +18,7 @@ function readLoggedIn() {
 function getCartId(item) {
   return String(item?._id || item?.id || item?.name || "");
 }
-
+//Normalize cart list
 function normalizeCartList(list) {
   if (!Array.isArray(list)) return [];
   return list
