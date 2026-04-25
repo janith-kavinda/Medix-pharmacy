@@ -122,7 +122,7 @@ export const adminSignupUser = async (req, res) => {
     res.status(500).json({ error: err.message || "Failed to create admin user." });
   }
 };
-
+// usercontroller
 export const getAllUsers = async (req, res) => {
   try {
     const users = await User.find().sort({ createdAt: -1 });
@@ -131,6 +131,8 @@ export const getAllUsers = async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 };
+//user controller s
+
 
 export const getUserById = async (req, res) => {
   try {

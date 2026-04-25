@@ -14,6 +14,7 @@ export const createBilling = async (req, res) => {
       price,
       paymentStatus,
     } = req.body;
+// billing controller
 
     const normalizedOrderId = orderId && mongoose.Types.ObjectId.isValid(orderId) ? orderId : null;
 
@@ -37,11 +38,7 @@ export const createBilling = async (req, res) => {
 
   } catch (err) {
     res.status(500).json({ error: err.message });
-  }
-};
-
-
-// GET ALL BILLS
+  }// Get the all bills
 export const getBillings = async (req, res) => {
   try {
     const bills = await Billing.find().sort({ createdAt: -1 });
@@ -66,7 +63,7 @@ export const getBillingById = async (req, res) => {
   }
 };
 
-// UPDATE BILL
+// UPDATE BILL e
 export const updateBilling = async (req, res) => {
   try {
     const {
