@@ -115,7 +115,7 @@ export default function UserCartPage() {
     setItems(next);
     saveCart(next);
   };
-
+//remove items
   const removeItem = (id) => {
     if (!readLoggedIn()) return;
     const next = items.filter((item) => getCartId(item) !== id);
