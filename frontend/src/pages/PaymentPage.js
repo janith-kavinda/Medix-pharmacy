@@ -3,6 +3,91 @@ import { useNavigate } from "react-router-dom";
 import { billingsApi, medicinesApi, ordersApi } from "../api/client";
 import MedixButton from "../components/ui/MedixButton";
 
+function onlyDigits(value) {
+  return String(value || "").replace(/\D/g, "");
+}
+
+function formatCardNumber(digits) {
+  const d = onlyDigits(digits).slice(0, 16);
+  return d.replace(/(\d{4})(?=\d)/g, "$1 ");
+}
+
+function formatExpiry(value) {
+  const digits = onlyDigits(value).slice(0, 4);
+  if (digits.length <= 2) return digits;
+  return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+}
+
+function validateEmailOptional(value) {
+  const s = String(value || "").trim();
+  if (!s) return "";
+  // Simple email check (optional field)
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s) ? "" : "Enter a valid email address.";
+}
+
+function validateCardOptional(digits) {
+  const d = onlyDigits(digits);
+  if (!d) return "";
+  if (d.length !== 16) return "Card number must be 16 digits.";
+  return "";
+}
+
+function validateCvvOptional(digits) {
+  const d = onlyDigits(digits);
+  if (!d) return "";
+  if (d.length !== 3) return "CVV must be 3 digits.";
+  return "";
+}
+
+function validateExpiryOptional(value) {
+  const s = String(value || "").trim();
+  if (!s) return "";
+  if (!/^\d{2}\/\d{2}$/.test(s)) return "Expiry must be in MM/YY format.";
+  const [mmText] = s.split("/");
+  const mm = Number(mmText);
+  if (mm < 1 || mm > 12) return "Expiry month must be between 01 and 12.";
+  return "";
+}
+
+function validatePaymentRequired(payment) {
+  const paypalEmail = String(payment?.paypalEmail || "").trim();
+  const cardNumberDigits = onlyDigits(payment?.cardNumberDigits).trim();
+  const expiry = String(payment?.expiry || "").trim();
+  const cvvDigits = onlyDigits(payment?.cvvDigits).trim();
+
+  const wantsPaypal = Boolean(paypalEmail);
+  const wantsCard = Boolean(cardNumberDigits || expiry || cvvDigits);
+
+  if (!wantsPaypal && !wantsCard) {
+    return {
+      form: "Please enter PayPal email or fill in credit card details.",
+      paypalEmail: "",
+      cardNumberDigits: "Card number is required.",
+      expiry: "Expiry date is required.",
+      cvvDigits: "CVV is required.",
+    };
+  }
+
+  if (wantsPaypal) {
+    return {
+      form: "",
+      paypalEmail: validateEmailOptional(paypalEmail),
+      cardNumberDigits: "",
+      expiry: "",
+      cvvDigits: "",
+    };
+  }
+
+  // Card flow: require all card fields.
+  return {
+    form: "",
+    paypalEmail: "",
+    cardNumberDigits: cardNumberDigits ? validateCardOptional(cardNumberDigits) : "Card number is required.",
+    expiry: expiry ? validateExpiryOptional(expiry) : "Expiry date is required.",
+    cvvDigits: cvvDigits ? validateCvvOptional(cvvDigits) : "CVV is required.",
+  };
+}
+
 function getCartId(item) {
   return String(item?._id || item?.id || item?.name || "");
 }
@@ -45,6 +130,18 @@ export default function PaymentPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [payment, setPayment] = useState({
+    paypalEmail: "",
+    cardNumberDigits: "",
+    expiry: "",
+    cvvDigits: "",
+  });
+  const [touched, setTouched] = useState({
+    paypalEmail: false,
+    cardNumberDigits: false,
+    expiry: false,
+    cvvDigits: false,
+  });
 
   const subtotal = useMemo(() => {
     return items.reduce(
@@ -52,6 +149,20 @@ export default function PaymentPage() {
       0
     );
   }, [items]);
+
+  const paymentErrors = useMemo(() => {
+    return validatePaymentRequired(payment);
+  }, [payment]);
+
+  const paymentHasErrors = useMemo(() => {
+    return Object.entries(paymentErrors)
+      .filter(([key]) => key !== "form")
+      .some(([, value]) => Boolean(value));
+  }, [paymentErrors]);
+
+  const markTouched = (field) => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+  };
 
   const payNow = async () => {
     try {
@@ -61,6 +172,24 @@ export default function PaymentPage() {
 
       if (!items.length) {
         throw new Error("Your cart is empty.");
+      }
+
+      // Require either PayPal email OR complete valid card details.
+      const gateErrors = validatePaymentRequired(payment);
+      const hasGateErrors =
+        Boolean(gateErrors.form) ||
+        Object.entries(gateErrors)
+          .filter(([key]) => key !== "form")
+          .some(([, value]) => Boolean(value));
+
+      if (hasGateErrors) {
+        setTouched({
+          paypalEmail: true,
+          cardNumberDigits: true,
+          expiry: true,
+          cvvDigits: true,
+        });
+        throw new Error(gateErrors.form || "Please fix the payment form inputs.");
       }
 
       const userRaw = localStorage.getItem("medix_user");
@@ -171,7 +300,17 @@ export default function PaymentPage() {
                   <img src="https://i.imgur.com/7kQEsHU.png" width="30" alt="Paypal" />
                 </button>
                 <div className="payment-demo-acc-body">
-                  <input type="text" className="payment-demo-input" placeholder="Paypal email" />
+                  <input
+                    type="email"
+                    className="payment-demo-input"
+                    placeholder="Paypal email"
+                    value={payment.paypalEmail}
+                    onChange={(e) => setPayment((p) => ({ ...p, paypalEmail: e.target.value }))}
+                    onBlur={() => markTouched("paypalEmail")}
+                  />
+                  {touched.paypalEmail && paymentErrors.paypalEmail && (
+                    <div className="ph-field-error">{paymentErrors.paypalEmail}</div>
+                  )}
                 </div>
 
                 <button className="payment-demo-acc-btn is-active" type="button">
@@ -188,8 +327,24 @@ export default function PaymentPage() {
                     <span className="payment-demo-label">Card Number</span>
                     <div className="payment-demo-input-wrap">
                       <i className="fa fa-credit-card" aria-hidden="true" />
-                      <input type="text" className="payment-demo-input" placeholder="0000 0000 0000 0000" />
+                      <input
+                        type="text"
+                        className="payment-demo-input"
+                        placeholder="0000 0000 0000 0000"
+                        inputMode="numeric"
+                        autoComplete="cc-number"
+                        value={formatCardNumber(payment.cardNumberDigits)}
+                        onChange={(e) => {
+                          const digits = onlyDigits(e.target.value).slice(0, 16);
+                          setPayment((p) => ({ ...p, cardNumberDigits: digits }));
+                        }}
+                        onBlur={() => markTouched("cardNumberDigits")}
+                        maxLength={19}
+                      />
                     </div>
+                    {touched.cardNumberDigits && paymentErrors.cardNumberDigits && (
+                      <div className="ph-field-error">{paymentErrors.cardNumberDigits}</div>
+                    )}
                   </div>
 
                   <div className="payment-demo-row">
@@ -197,16 +352,48 @@ export default function PaymentPage() {
                       <span className="payment-demo-label">Expiry Date</span>
                       <div className="payment-demo-input-wrap">
                         <i className="fa fa-calendar" aria-hidden="true" />
-                        <input type="text" className="payment-demo-input" placeholder="MM/YY" />
+                        <input
+                          type="text"
+                          className="payment-demo-input"
+                          placeholder="MM/YY"
+                          inputMode="numeric"
+                          autoComplete="cc-exp"
+                          value={payment.expiry}
+                          onChange={(e) => {
+                            const next = formatExpiry(e.target.value);
+                            setPayment((p) => ({ ...p, expiry: next }));
+                          }}
+                          onBlur={() => markTouched("expiry")}
+                          maxLength={5}
+                        />
                       </div>
+                      {touched.expiry && paymentErrors.expiry && (
+                        <div className="ph-field-error">{paymentErrors.expiry}</div>
+                      )}
                     </div>
 
                     <div className="payment-demo-field">
                       <span className="payment-demo-label">CVC/CVV</span>
                       <div className="payment-demo-input-wrap">
                         <i className="fa fa-lock" aria-hidden="true" />
-                        <input type="text" className="payment-demo-input" placeholder="000" />
+                        <input
+                          type="text"
+                          className="payment-demo-input"
+                          placeholder="000"
+                          inputMode="numeric"
+                          autoComplete="cc-csc"
+                          value={payment.cvvDigits}
+                          onChange={(e) => {
+                            const digits = onlyDigits(e.target.value).slice(0, 3);
+                            setPayment((p) => ({ ...p, cvvDigits: digits }));
+                          }}
+                          onBlur={() => markTouched("cvvDigits")}
+                          maxLength={3}
+                        />
                       </div>
+                      {touched.cvvDigits && paymentErrors.cvvDigits && (
+                        <div className="ph-field-error">{paymentErrors.cvvDigits}</div>
+                      )}
                     </div>
                   </div>
 
@@ -224,7 +411,9 @@ export default function PaymentPage() {
               <div className="payment-demo-summary-head">
                 <div>
                   <span>Pro(Billed Monthly) <i className="fa fa-caret-down" aria-hidden="true" /></span>
-                  <a className="payment-demo-link" href="#">Save 20% with annual billing</a>
+                  <button className="payment-demo-link" type="button">
+                    Save 20% with annual billing
+                  </button>
                 </div>
                 <div className="payment-demo-price">
                   <sup>Rs {subtotal.toFixed(2)}</sup>
@@ -262,7 +451,7 @@ export default function PaymentPage() {
                   block
                   variant="primary"
                   onClick={payNow}
-                  disabled={submitting || items.length === 0}
+                  disabled={submitting || items.length === 0 || paymentHasErrors}
                 >
                   {submitting ? "Processing..." : "Pay Now"}
                 </MedixButton>
