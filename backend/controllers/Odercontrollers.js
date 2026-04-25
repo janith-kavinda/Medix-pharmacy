@@ -26,7 +26,7 @@ export const getAllOrders = async (req, res) => {
   }
 };
 
-// ORDERS FOR A USER (define before :id route)
+// ORDERS FOR A USER. (define before :id route)
 export const getOrdersByUser = async (req, res) => {
   try {
     const { userId } = req.params;
