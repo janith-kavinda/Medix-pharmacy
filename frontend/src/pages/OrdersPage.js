@@ -14,7 +14,7 @@ function formatDateTime(value) {
 	if (Number.isNaN(d.getTime())) return "-";
 	return d.toLocaleString();
 }
-
+//Normalize status
 function normalizeStatus(status) {
 	const s = String(status || "Pending").trim();
 	if (!s) return "Pending";
