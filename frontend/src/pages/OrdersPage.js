@@ -41,7 +41,7 @@ function polarToCartesian(cx, cy, r, angleDegrees) {
 		y: cy + r * Math.sin(angleRadians),
 	};
 }
-
+//Describe pie chart
 function describeArc(cx, cy, r, startAngle, endAngle) {
 	const start = polarToCartesian(cx, cy, r, endAngle);
 	const end = polarToCartesian(cx, cy, r, startAngle);
