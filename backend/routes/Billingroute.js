@@ -9,7 +9,7 @@ import {
 } from "../controllers/Billingcontroller.js";
 
 const router = express.Router();
-
+//billing route
 router.post("/", createBilling);
 router.get("/", getBillings);
 router.get("/:id", getBillingById);
