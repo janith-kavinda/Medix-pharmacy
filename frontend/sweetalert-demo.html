@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SweetAlert2 Demo</title>
+  <!-- SweetAlert2 CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 2rem; }
+    button { margin: 0.5rem 0; padding: 0.5rem 1rem; }
+  </style>
+</head>
+<body>
+  <h1>SweetAlert2 Demo</h1>
+  <p>Click the buttons to see different alert types.</p>
+
+  <button id="basic">Basic Alert</button>
+  <button id="success">Success Alert</button>
+  <button id="confirm">Confirm Dialog</button>
+  <button id="toast">Toast Notification</button>
+
+  <script>
+    document.getElementById('basic').addEventListener('click', () => {
+      Swal.fire('Hello!', 'This is a basic SweetAlert2 alert.', 'info');
+    });
+
+    document.getElementById('success').addEventListener('click', () => {
+      Swal.fire({
+        icon: 'success',
+        title: 'Saved',
+        text: 'Your changes have been saved successfully.',
+        timer: 2000,
+        showConfirmButton: false
+      });
+    });
+
+    document.getElementById('confirm').addEventListener('click', async () => {
+      const result = await Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel'
+      });
+
+      if (result.isConfirmed) {
+        Swal.fire('Deleted!', 'Your item has been deleted.', 'success');
+      } else if (result.dismiss === Swal.DismissReason.cancel) {
+        Swal.fire('Cancelled', 'Your item is safe.', 'info');
+      }
+    });
+
+    document.getElementById('toast').addEventListener('click', () => {
+      const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true
+      });
+
+      Toast.fire({
+        icon: 'success',
+        title: 'Signed in successfully'
+      });
+    });
+  </script>
+</body>
+</html>

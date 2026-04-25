@@ -1,0 +1,136 @@
+.ub-invoice {
+  position: relative;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 4px 20px rgba(15, 59, 95, 0.04);
+  overflow: hidden;
+}
+
+.ub-invoice::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, #0d9488 0%, #0f3b5f 100%);
+  border-radius: 10px 0 0 10px;
+}
+
+.ub-invoice__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  padding: 0.9rem 1.15rem 0.65rem 1.35rem;
+  border-bottom: 1px solid #f1f5f9;
+  background: linear-gradient(180deg, #fcfcfd 0%, #fafbfc 100%);
+}
+
+.ub-invoice__kicker {
+  margin: 0;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.ub-invoice__title {
+  margin: 0.1rem 0 0;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.ub-invoice__btn {
+  min-height: 2.25rem;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(15, 59, 95, 0.12);
+}
+
+.ub-invoice__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem 1.25rem;
+  padding: 0.9rem 1.15rem 0.9rem 1.35rem;
+}
+
+@media (min-width: 720px) {
+  .ub-invoice__grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem 1.5rem;
+  }
+}
+
+.ub-invoice__cell {
+  min-width: 0;
+}
+
+.ub-invoice__label {
+  margin: 0 0 0.25rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+}
+
+.ub-invoice__value {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  word-break: break-word;
+}
+
+.ub-invoice__value--amount {
+  font-size: 1.02rem;
+  font-weight: 800;
+  color: #0f3b5f;
+}
+
+.ub-invoice__footnote {
+  margin: 0;
+  padding: 0.55rem 1.15rem 0.95rem 1.35rem;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: #94a3b8;
+  border-top: 1px solid #f1f5f9;
+  background: #fbfcfe;
+}
+
+.ub-invoice__empty {
+  padding: 1rem 1.15rem 1.1rem 1.35rem;
+}
+
+.ub-invoice__empty-title {
+  margin: 0 0 0.15rem;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.ub-invoice__empty-meta {
+  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #334155;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+.ub-invoice__empty-text {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: #94a3b8;
+}
