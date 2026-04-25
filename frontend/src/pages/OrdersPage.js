@@ -33,7 +33,7 @@ function statusBadgeClass(status) {
 	if (s === "rejected" || s === "cancelled") return "badge badge-rejected";
 	return "badge badge-pending";
 }
-
+//charts
 function polarToCartesian(cx, cy, r, angleDegrees) {
 	const angleRadians = ((angleDegrees - 90) * Math.PI) / 180.0;
 	return {
