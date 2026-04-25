@@ -508,7 +508,7 @@ export default function UserCartPage() {
           imageAlt="Pharmacist reviewing medicine stock at the counter"
           className="cart-shell"
         />
-
+//display messages
         {error && <div className="alert alert-error">{error}</div>}
         {success && <div className="alert alert-success">{success}</div>}
 
