@@ -147,7 +147,7 @@ export default function UserCartPage() {
       setPaying(false);
     }
   };
-
+//calculate tax and total
   const tax = subtotal * 0.05; // 5% tax
   const delivery = subtotal > 0 ? 100 : 0; // Fixed delivery fee
   const total = subtotal + tax + delivery;
