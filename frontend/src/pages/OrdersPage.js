@@ -180,7 +180,7 @@ export default function OrdersPage() {
 		price: "0",
 		status: "Approved",
 	});
-
+//fetch orders
 	const fetchOrders = async () => {
 		try {
 			setLoading(true);
