@@ -157,7 +157,7 @@ export const updateUser = async (req, res) => {
         return res.status(409).json({ error: "Email already in use" });
       }
     }
-
+//biling models
     const payload = {};
     if (fullName !== undefined) payload.fullName = String(fullName).trim();
     if (email !== undefined) payload.email = String(email).toLowerCase().trim();

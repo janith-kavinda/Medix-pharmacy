@@ -11,7 +11,7 @@ const BillingSchema = new mongoose.Schema({
     type: String,
     default: "Walk-in"
   },
-
+//billing models
   medicineName: {
     type: String,
     required: true
@@ -37,7 +37,7 @@ const BillingSchema = new mongoose.Schema({
     enum: ["Pending", "Paid"],
     default: "Pending"
   }
-
+//Billing
 }, { timestamps: true });
 
 const Billing = mongoose.model("Billing", BillingSchema);
