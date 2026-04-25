@@ -204,7 +204,7 @@ export default function OrdersPage() {
 	useEffect(() => {
 		fetchOrders();
 	}, []);
-
+//calculate total price
 	const computedTotal = useMemo(() => {
 		const qty = Math.max(0, Number(form.quantity || 0));
 		const price = Math.max(0, Number(form.price || 0));
