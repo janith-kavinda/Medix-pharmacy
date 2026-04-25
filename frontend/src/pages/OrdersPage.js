@@ -7,7 +7,7 @@ function formatRs(amount) {
 	const value = Number(amount) || 0;
 	return "Rs " + value.toFixed(2);
 }
-
+//format date and time
 function formatDateTime(value) {
 	if (!value) return "-";
 	const d = new Date(value);
