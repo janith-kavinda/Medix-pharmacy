@@ -95,7 +95,7 @@ function PieChart({ data }) {
 			</div>
 		);
 	}
-
+//calculate
 	let currentAngle = 0;
 	const slices = cleanData.map((slice, idx) => {
 		const value = Number(slice.value || 0);
