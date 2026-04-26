@@ -10,7 +10,7 @@ export const createOrder = async (req, res) => {
   }
 };
 
-// READ ALL (optional ?userId=… for the customer profile “my orders”)
+// READ  (optional ?userId=… for the customer profile “my orders”)
 export const getAllOrders = async (req, res) => {
   try {
     const { userId } = req.query;
@@ -26,7 +26,7 @@ export const getAllOrders = async (req, res) => {
   }
 };
 
-// ORDERS FOR A USER (define before :id route)
+// ORDERS FOR A USER. (define before :id route)
 export const getOrdersByUser = async (req, res) => {
   try {
     const { userId } = req.params;

@@ -7,14 +7,14 @@ function formatRs(amount) {
 	const value = Number(amount) || 0;
 	return "Rs " + value.toFixed(2);
 }
-
+//format date and time
 function formatDateTime(value) {
 	if (!value) return "-";
 	const d = new Date(value);
 	if (Number.isNaN(d.getTime())) return "-";
 	return d.toLocaleString();
 }
-
+//Normalize status
 function normalizeStatus(status) {
 	const s = String(status || "Pending").trim();
 	if (!s) return "Pending";
@@ -26,14 +26,14 @@ function normalizeStatus(status) {
 	if (lower === "pending") return "Pending";
 	return s;
 }
-//oder
+//oderss
 function statusBadgeClass(status) {
 	const s = normalizeStatus(status).toLowerCase();
 	if (s === "approved" || s === "completed") return "badge badge-approved";
 	if (s === "rejected" || s === "cancelled") return "badge badge-rejected";
 	return "badge badge-pending";
 }
-
+//charts
 function polarToCartesian(cx, cy, r, angleDegrees) {
 	const angleRadians = ((angleDegrees - 90) * Math.PI) / 180.0;
 	return {
@@ -41,7 +41,7 @@ function polarToCartesian(cx, cy, r, angleDegrees) {
 		y: cy + r * Math.sin(angleRadians),
 	};
 }
-
+//Describe pie chart
 function describeArc(cx, cy, r, startAngle, endAngle) {
 	const start = polarToCartesian(cx, cy, r, endAngle);
 	const end = polarToCartesian(cx, cy, r, startAngle);
@@ -95,7 +95,7 @@ function PieChart({ data }) {
 			</div>
 		);
 	}
-
+//calculate
 	let currentAngle = 0;
 	const slices = cleanData.map((slice, idx) => {
 		const value = Number(slice.value || 0);
@@ -180,7 +180,7 @@ export default function OrdersPage() {
 		price: "0",
 		status: "Approved",
 	});
-
+//fetch orders
 	const fetchOrders = async () => {
 		try {
 			setLoading(true);
@@ -204,7 +204,7 @@ export default function OrdersPage() {
 	useEffect(() => {
 		fetchOrders();
 	}, []);
-
+//calculate total price
 	const computedTotal = useMemo(() => {
 		const qty = Math.max(0, Number(form.quantity || 0));
 		const price = Math.max(0, Number(form.price || 0));

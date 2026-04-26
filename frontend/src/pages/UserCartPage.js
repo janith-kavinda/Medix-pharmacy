@@ -18,7 +18,7 @@ function readLoggedIn() {
 function getCartId(item) {
   return String(item?._id || item?.id || item?.name || "");
 }
-
+//Normalize cart list
 function normalizeCartList(list) {
   if (!Array.isArray(list)) return [];
   return list
@@ -32,7 +32,7 @@ function normalizeCartList(list) {
     }))
     .filter((item) => Boolean(getCartId(item)));
 }
-
+//Generate image
 function getPlaceholderImage(name) {
   const label = encodeURIComponent(String(name || "Medicine").slice(0, 18));
   const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 360'><defs><linearGradient id='g' x1='0' x2='1' y1='0' y2='1'><stop offset='0%' stop-color='#0d9488'/><stop offset='100%' stop-color='#0f3b5f'/></linearGradient></defs><rect width='600' height='360' fill='url(#g)'/><circle cx='520' cy='70' r='80' fill='rgba(255,255,255,0.12)'/><circle cx='90' cy='300' r='110' fill='rgba(255,255,255,0.08)'/><text x='300' y='190' fill='white' text-anchor='middle' font-size='34' font-family='Arial' font-weight='700'>${label}</text></svg>`;
@@ -115,7 +115,7 @@ export default function UserCartPage() {
     setItems(next);
     saveCart(next);
   };
-
+//remove items
   const removeItem = (id) => {
     if (!readLoggedIn()) return;
     const next = items.filter((item) => getCartId(item) !== id);
@@ -147,7 +147,7 @@ export default function UserCartPage() {
       setPaying(false);
     }
   };
-
+//calculate tax and total
   const tax = subtotal * 0.05; // 5% tax
   const delivery = subtotal > 0 ? 100 : 0; // Fixed delivery fee
   const total = subtotal + tax + delivery;
@@ -508,7 +508,7 @@ export default function UserCartPage() {
           imageAlt="Pharmacist reviewing medicine stock at the counter"
           className="cart-shell"
         />
-
+//display messages
         {error && <div className="alert alert-error">{error}</div>}
         {success && <div className="alert alert-success">{success}</div>}
 
